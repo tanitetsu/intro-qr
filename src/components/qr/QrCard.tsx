@@ -1,27 +1,116 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
-async function shareUrl(url: string, title: string) {
-  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+type ShareStatus =
+  | { kind: "idle" }
+  | { kind: "copied" }
+  | { kind: "manual"; url: string };
+
+function isAbortError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const name = "name" in error ? String(error.name) : "";
+  // User dismissed the share sheet — not a failure.
+  return name === "AbortError";
+}
+
+/** Android Chrome may reject relative / non-absolute share URLs. */
+function toAbsoluteUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return trimmed;
+  try {
+    return new URL(trimmed).href;
+  } catch {
+    if (typeof window === "undefined") return trimmed;
     try {
-      await navigator.share({
-        title,
-        text: `${title} の自己紹介`,
-        url,
-      });
-      return;
-    } catch (e) {
-      // ユーザーキャンセルは無視
-      if (e instanceof DOMException && e.name === "AbortError") return;
+      return new URL(trimmed, window.location.origin).href;
+    } catch {
+      return trimmed;
     }
+  }
+}
+
+async function copyWithClipboard(url: string): Promise<boolean> {
+  if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+    return false;
   }
   try {
     await navigator.clipboard.writeText(url);
-    alert("リンクをコピーしました");
+    return true;
   } catch {
-    alert(url);
+    return false;
   }
+}
+
+/** Legacy fallback for WebViews / older Android where Clipboard API is blocked. */
+function copyWithExecCommand(url: string): boolean {
+  if (typeof document === "undefined") return false;
+  const input = document.createElement("textarea");
+  input.value = url;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.top = "0";
+  input.style.left = "0";
+  input.style.width = "1px";
+  input.style.height = "1px";
+  input.style.opacity = "0";
+  document.body.appendChild(input);
+  input.focus();
+  input.select();
+  input.setSelectionRange(0, url.length);
+  let ok = false;
+  try {
+    ok = document.execCommand("copy");
+  } catch {
+    ok = false;
+  }
+  document.body.removeChild(input);
+  return ok;
+}
+
+async function shareUrl(url: string, title: string): Promise<ShareStatus> {
+  const absoluteUrl = toAbsoluteUrl(url);
+
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    const payloads: ShareData[] = [
+      {
+        title,
+        text: `${title} の自己紹介`,
+        url: absoluteUrl,
+      },
+      { title, url: absoluteUrl },
+      { url: absoluteUrl },
+    ];
+
+    for (const data of payloads) {
+      try {
+        if (
+          typeof navigator.canShare === "function" &&
+          !navigator.canShare(data)
+        ) {
+          continue;
+        }
+        await navigator.share(data);
+        // Native share sheet handled it — no alert/toast spam.
+        return { kind: "idle" };
+      } catch (error) {
+        if (isAbortError(error)) {
+          return { kind: "idle" };
+        }
+        // Try a simpler payload (Android sometimes rejects text+url).
+      }
+    }
+  }
+
+  if (await copyWithClipboard(absoluteUrl)) {
+    return { kind: "copied" };
+  }
+  if (copyWithExecCommand(absoluteUrl)) {
+    return { kind: "copied" };
+  }
+
+  return { kind: "manual", url: absoluteUrl };
 }
 
 export function QrCard({
@@ -34,6 +123,29 @@ export function QrCard({
   subtitle?: string;
 }) {
   const tooLong = value.length > 1200;
+  const [status, setStatus] = useState<ShareStatus>({ kind: "idle" });
+  const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (clearTimer.current) clearTimeout(clearTimer.current);
+    };
+  }, []);
+
+  function showStatus(next: ShareStatus) {
+    if (clearTimer.current) clearTimeout(clearTimer.current);
+    setStatus(next);
+    if (next.kind === "copied") {
+      clearTimer.current = setTimeout(() => {
+        setStatus({ kind: "idle" });
+      }, 2200);
+    }
+  }
+
+  async function handleShare() {
+    const result = await shareUrl(value, title);
+    showStatus(result);
+  }
 
   return (
     <div className="rounded-3xl border border-black/8 bg-white p-5 shadow-sm">
@@ -55,11 +167,12 @@ export function QrCard({
       <button
         type="button"
         disabled={tooLong}
-        onClick={() => void shareUrl(value, title)}
+        onClick={() => void handleShare()}
+        aria-label="リンクを共有"
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-zinc-300"
       >
         <svg
-          className="h-5 w-5"
+          className="h-5 w-5 shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           aria-hidden
@@ -76,8 +189,30 @@ export function QrCard({
             strokeLinecap="round"
           />
         </svg>
-        共有
+        リンクを共有
       </button>
+
+      {status.kind === "copied" ? (
+        <p
+          role="status"
+          className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-800"
+        >
+          リンクをコピーしました
+        </p>
+      ) : null}
+      {status.kind === "manual" ? (
+        <div
+          role="status"
+          className="mt-3 space-y-1 rounded-xl bg-amber-50 px-3 py-2 text-center"
+        >
+          <p className="text-xs font-medium text-amber-900">
+            下のURLを長押ししてコピーしてください
+          </p>
+          <p className="break-all select-all text-xs text-amber-950 underline-offset-2">
+            {status.url}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }
