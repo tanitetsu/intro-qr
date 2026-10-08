@@ -4,8 +4,9 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
-  useSyncExternalStore,
+  useState,
 } from "react";
 import {
   getActivePage,
@@ -32,56 +33,38 @@ const EMPTY_DATA: AppData = {
   savedPeople: [],
 };
 
-const listeners = new Set<() => void>();
-let cachedData: AppData | null = null;
-
-function emitChange() {
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-}
-
-function getClientSnapshot(): AppData {
-  // useSyncExternalStore は「変化がなければ同一参照」を返す必要がある
-  if (!cachedData) {
-    cachedData = loadAppData();
-  }
-  return cachedData;
-}
-
-function getServerSnapshot(): AppData {
-  return EMPTY_DATA;
-}
-
 const AppDataContext = createContext<AppDataContextValue | null>(null);
 
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
-  const data = useSyncExternalStore(
-    subscribe,
-    getClientSnapshot,
-    getServerSnapshot,
-  );
-  const ready = typeof window !== "undefined";
+  const [ready, setReady] = useState(false);
+  const [data, setDataState] = useState<AppData>(EMPTY_DATA);
+
+  useEffect(() => {
+    // マウント後にだけ localStorage を読む（SSR/ハイドレーションずれ防止）
+    const id = window.setTimeout(() => {
+      try {
+        setDataState(loadAppData());
+      } catch {
+        setDataState(EMPTY_DATA);
+      }
+      setReady(true);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, []);
 
   const setData = useCallback(
     (updater: AppData | ((prev: AppData) => AppData)) => {
-      const prev = cachedData ?? loadAppData();
-      const next = typeof updater === "function" ? updater(prev) : updater;
-      saveAppData(next);
-      cachedData = next;
-      emitChange();
+      setDataState((prev) => {
+        const next = typeof updater === "function" ? updater(prev) : updater;
+        saveAppData(next);
+        return next;
+      });
     },
     [],
   );
 
   const refresh = useCallback(() => {
-    cachedData = loadAppData();
-    emitChange();
+    setDataState(loadAppData());
   }, []);
 
   const value = useMemo<AppDataContextValue>(
