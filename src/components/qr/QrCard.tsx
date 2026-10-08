@@ -11,6 +11,8 @@ export function QrCard({
   title: string;
   subtitle?: string;
 }) {
+  const tooLong = value.length > 1200;
+
   return (
     <div className="rounded-3xl border border-black/8 bg-white p-5 shadow-sm">
       <div className="mb-4 space-y-1 text-center">
@@ -20,10 +22,16 @@ export function QrCard({
         ) : null}
       </div>
       <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-2xl bg-zinc-50 p-3">
-        <QRCodeSVG value={value} size={200} level="M" includeMargin={false} />
+        {tooLong ? (
+          <p className="px-3 text-center text-xs text-zinc-500">
+            QRが長すぎます。クラウド同期後に再表示してください。
+          </p>
+        ) : (
+          <QRCodeSVG value={value} size={200} level="M" includeMargin={false} />
+        )}
       </div>
       <p className="mt-4 break-all text-center text-[11px] leading-4 text-zinc-400">
-        {value}
+        {tooLong ? `${value.slice(0, 80)}…` : value}
       </p>
     </div>
   );

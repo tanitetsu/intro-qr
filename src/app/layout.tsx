@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppDataProvider } from "@/lib/app-data";
 import { AppShell } from "@/components/layout/AppShell";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,9 +40,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AppDataProvider>
-          <AppShell>{children}</AppShell>
-        </AppDataProvider>
+        <ErrorBoundary>
+          <AppDataProvider>
+            <AppShell>{children}</AppShell>
+          </AppDataProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

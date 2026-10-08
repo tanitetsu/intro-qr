@@ -33,6 +33,7 @@ const EMPTY_DATA: AppData = {
 };
 
 const listeners = new Set<() => void>();
+let cachedData: AppData | null = null;
 
 function emitChange() {
   listeners.forEach((listener) => listener());
@@ -46,7 +47,11 @@ function subscribe(listener: () => void) {
 }
 
 function getClientSnapshot(): AppData {
-  return loadAppData();
+  // useSyncExternalStore は「変化がなければ同一参照」を返す必要がある
+  if (!cachedData) {
+    cachedData = loadAppData();
+  }
+  return cachedData;
 }
 
 function getServerSnapshot(): AppData {
@@ -65,15 +70,17 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
   const setData = useCallback(
     (updater: AppData | ((prev: AppData) => AppData)) => {
-      const prev = loadAppData();
+      const prev = cachedData ?? loadAppData();
       const next = typeof updater === "function" ? updater(prev) : updater;
       saveAppData(next);
+      cachedData = next;
       emitChange();
     },
     [],
   );
 
   const refresh = useCallback(() => {
+    cachedData = loadAppData();
     emitChange();
   }, []);
 
