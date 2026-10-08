@@ -29,8 +29,11 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   const [syncHint, setSyncHint] = useState("");
 
   const dataRef = useRef(data);
-  dataRef.current = data;
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
 
   useEffect(() => {
     return () => {
@@ -56,6 +59,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   }
 
   function commit(next: AppData) {
+    dataRef.current = next;
     setData(next);
     scheduleCloudSync(pageId);
   }
