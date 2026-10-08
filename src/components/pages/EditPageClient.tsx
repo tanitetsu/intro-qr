@@ -83,8 +83,8 @@ export function EditPageClient({ pageId }: { pageId: string }) {
     return (
       <div className="space-y-3 p-4">
         <p className="text-sm text-zinc-600">ページが見つかりません。</p>
-        <Link href="/pages" className="text-sm text-violet-700">
-          一覧へ
+        <Link href="/" className="text-sm text-violet-700">
+          ホームへ
         </Link>
       </div>
     );

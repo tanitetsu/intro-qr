@@ -40,39 +40,37 @@ export function EditTabIcon({ className }: { className?: string }) {
   );
 }
 
-/** 保存した人のアルバム／名簿 */
+/** 保存した人のアルバム（人が密集している様子） */
 export function AlbumTabIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      {/* 後ろのカード */}
-      <rect
-        x="6.5"
-        y="4"
-        width="13"
-        height="15"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        opacity="0.45"
-      />
-      {/* 前のカード */}
-      <rect
-        x="3.5"
-        y="6"
-        width="13"
-        height="15"
-        rx="2"
-        stroke="currentColor"
-        strokeWidth="1.7"
-      />
-      {/* 人物 */}
-      <circle cx="10" cy="11.2" r="2" stroke="currentColor" strokeWidth="1.5" />
+      {/* 左（やや後ろ） */}
+      <circle cx="7" cy="8.6" r="2.2" stroke="currentColor" strokeWidth="1.55" />
       <path
-        d="M6.8 17.2c.7-1.8 1.9-2.7 3.2-2.7s2.5.9 3.2 2.7"
+        d="M3.6 16.2c.65-2 2-3 3.4-3s2.75 1 3.4 3"
         stroke="currentColor"
-        strokeWidth="1.5"
+        strokeWidth="1.55"
         strokeLinecap="round"
       />
+      {/* 右（やや後ろ） */}
+      <circle cx="17" cy="8.6" r="2.2" stroke="currentColor" strokeWidth="1.55" />
+      <path
+        d="M13.6 16.2c.65-2 2-3 3.4-3s2.75 1 3.4 3"
+        stroke="currentColor"
+        strokeWidth="1.55"
+        strokeLinecap="round"
+      />
+      {/* 中央（手前・密集の核） */}
+      <circle cx="12" cy="9.4" r="2.45" stroke="currentColor" strokeWidth="1.7" />
+      <path
+        d="M8.1 18.4c.8-2.25 2.25-3.35 3.9-3.35s3.1 1.1 3.9 3.35"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+      {/* 隙間を埋める後ろの人（密集感） */}
+      <circle cx="9.6" cy="7.2" r="1.7" stroke="currentColor" strokeWidth="1.35" opacity="0.75" />
+      <circle cx="14.4" cy="7.2" r="1.7" stroke="currentColor" strokeWidth="1.35" opacity="0.75" />
     </svg>
   );
 }
