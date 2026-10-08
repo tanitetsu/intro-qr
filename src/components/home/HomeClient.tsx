@@ -63,20 +63,30 @@ export function HomeClient() {
         renderItem={(id) => {
           const page = pages.find((p) => p.id === id);
           if (!page) return null;
+          const cloudPath = page.cloudId ? `/u/${page.cloudId}` : null;
           const shareToken = encodeSharedPage(page);
-          const shareUrl = origin
-            ? `${origin}/s/${shareToken}`
-            : `/s/${shareToken}`;
+          const sharePath = `/s/${shareToken}`;
+          const qrPath = cloudPath ?? sharePath;
+          const qrUrl = origin ? `${origin}${qrPath}` : qrPath;
           return (
             <div className="space-y-3">
               <QrCard
-                value={shareUrl}
+                value={qrUrl}
                 title={page.title}
-                subtitle={`${page.displayName} の自己紹介`}
+                subtitle={
+                  cloudPath
+                    ? `${page.displayName}（クラウド公開）`
+                    : `${page.displayName}（一時共有）`
+                }
               />
+              {!cloudPath ? (
+                <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  まだクラウド未同期です。他端末向け本公開は「ページ」タブでログイン後に同期してください。
+                </p>
+              ) : null}
               <div className="flex gap-2">
                 <Link
-                  href={`/u/${page.id}`}
+                  href={cloudPath ?? `/u/${page.id}`}
                   className="flex-1 rounded-2xl border border-black/10 bg-white px-3 py-3 text-center text-sm font-medium"
                 >
                   ページを見る

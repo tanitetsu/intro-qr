@@ -1,4 +1,4 @@
-import { PublicPageClient } from "@/components/public/PublicPageClient";
+import { CloudOrLocalPublicPage } from "@/components/public/CloudOrLocalPublicPage";
 
 export default async function LocalPublicPage({
   params,
@@ -6,5 +6,5 @@ export default async function LocalPublicPage({
   params: Promise<{ pageId: string }>;
 }) {
   const { pageId } = await params;
-  return <PublicPageClient pageId={pageId} />;
+  return <CloudOrLocalPublicPage pageId={pageId} />;
 }

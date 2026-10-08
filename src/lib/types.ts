@@ -12,6 +12,8 @@ export type ProfileLink = {
 
 export type ProfilePage = {
   id: string;
+  /** Supabase 上の UUID。公開QRはこれを優先 */
+  cloudId?: string | null;
   title: string;
   slug: string;
   displayName: string;

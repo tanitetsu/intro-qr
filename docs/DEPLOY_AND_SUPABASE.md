@@ -119,16 +119,21 @@ create policy "Owners can delete their pages"
 3. 開発中は「Confirm email」をオフにしても可  
    （本番前に戻す）
 
-### Step 5. こちらへ共有するもの
-
-次の2つだけ送ってください（パスワードや service_role は不要）:
+### Step 5. 環境変数の形
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOi...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_... または eyJ...
 ```
 
-受け取ったら、アプリ側の接続実装を進めます。
+注意: URL の末尾に `/rest/v1/` は付けない。
+
+### Step 6. アプリ側の使い方
+
+1. SQL を実行済みであること
+2. アプリの「ログイン」でアカウント作成
+3. 「ページ」で対象ページの **クラウド同期** を押す
+4. ホームQRが `/u/<cloudId>` になる（他端末で閲覧可）
 
 ### 補足（費用）
 
