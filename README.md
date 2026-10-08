@@ -26,20 +26,28 @@ npm install
 npm run dev
 ```
 
-iPhone で試す場合:
+## 本番公開（推奨）
 
-1. 同じWi-Fi内のPCで `npm run dev -- --hostname 0.0.0.0`
-2. iPhone Safari で `http://<PCのIP>:3000` を開く
+**GitHub → Vercel 自動デプロイ** を使います。  
+一時トンネル（trycloudflare / loca.lt）は本番利用禁止です。
 
-## 注意（現状）
+手順: [`docs/GITHUB_VERCEL_SETUP.md`](docs/GITHUB_VERCEL_SETUP.md)
 
-- 公開プロフィールの本命同期（Supabase）は未接続です
-- QRは共有トークン方式（`/s/[token]`）なので、他端末でもページを開けます
-- 顔写真・保存データはブラウザ端末内に残ります
+必要な環境変数:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
+```
+
+## 注意
+
+- 顔写真・保存した相手は端末内（ブラウザ）に保存
+- 公開プロフィールは Supabase に同期可能
+- Supabase テーブル作成 SQL: `docs/supabase-schema.sql`
 
 ## 次の予定
 
-1. Supabase で公開ページをクラウド保存
+1. GitHub × Vercel で本番URL固定
 2. 位置情報の任意自動提案
-3. Vercel へデプロイ
-4. 後から Expo でアプリ化
+3. 後から Expo でアプリ化
