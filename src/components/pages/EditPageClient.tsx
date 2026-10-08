@@ -49,12 +49,12 @@ export function EditPageClient({ pageId }: { pageId: string }) {
       if (!latest) return;
       const result = await syncPageToCloud(current, latest);
       if (result.error === "not_logged_in") {
-        setSyncHint("ログインすると自動でクラウド同期されます");
+        setSyncHint("ログインすると同期できます");
         return;
       }
       if (result.error) return;
       setData(result.data);
-      setSyncHint("クラウドへ自動同期しました");
+      setSyncHint("同期しました");
     }, SYNC_DEBOUNCE_MS);
   }
 
@@ -84,7 +84,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
       <div className="space-y-3 p-4">
         <p className="text-sm text-zinc-600">ページが見つかりません。</p>
         <Link href="/pages" className="text-sm text-violet-700">
-          一覧へ戻る
+          一覧へ
         </Link>
       </div>
     );
@@ -95,8 +95,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   return (
     <div className="space-y-5 p-4">
       <div>
-        <h1 className="text-xl font-bold">ページ編集</h1>
-        <p className="text-sm text-zinc-600">関心リンクを中心に整えます</p>
+        <h1 className="text-xl font-bold">編集</h1>
         {page.cloudId ? (
           <Link
             href={previewHref}
@@ -132,7 +131,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
         </label>
         <label className="block space-y-1">
           <span className="text-xs font-medium text-zinc-500">
-            自己紹介文（任意・下部補助）
+            自己紹介（任意）
           </span>
           <textarea
             className="min-h-20 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"

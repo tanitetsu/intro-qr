@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   getSessionUser,
@@ -53,9 +52,6 @@ export function AuthClient() {
           >
             ログアウト
           </button>
-          <Link href="/pages" className="block text-center text-sm text-violet-700">
-            ページ一覧へ（同期できます）
-          </Link>
         </div>
       ) : (
         <div className="space-y-3 rounded-2xl border border-black/8 bg-white p-4">
@@ -107,9 +103,7 @@ export function AuthClient() {
                   return;
                 }
                 setUserEmail(data.user?.email ?? email);
-                setMessage(
-                  "アカウントを作成しました。メール確認が有効な場合は確認後にログインしてください。",
-                );
+                setMessage("アカウントを作成しました");
               }}
             >
               新規登録

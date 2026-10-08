@@ -20,9 +20,9 @@ export function PagesClient() {
       if (cancelled) return;
       if (result.synced > 0) {
         setData(result.data);
-        setSyncHint("クラウドへ自動同期しました");
+        setSyncHint("同期しました");
       } else if (result.error === "not_logged_in") {
-        setSyncHint("ログインすると自動でクラウド同期されます");
+        setSyncHint("ログインすると同期できます");
       }
     })();
     return () => {

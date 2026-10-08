@@ -58,7 +58,7 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
               : "bg-zinc-100 text-zinc-400"
           }`}
         >
-          写真を見る
+          写真
         </button>
       </div>
 

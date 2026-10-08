@@ -37,7 +37,7 @@ export function ProfileView({
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-zinc-800">関心・リンク</h2>
+        <h2 className="text-sm font-semibold text-zinc-800">リンク</h2>
         {ordered.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-zinc-300 bg-white/60 p-4 text-sm text-zinc-500">
             まだリンクがありません。

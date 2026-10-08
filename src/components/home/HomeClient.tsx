@@ -27,10 +27,8 @@ export function HomeClient() {
   if (!pages.length || !activePage) {
     return (
       <div className="space-y-4 p-4">
-        <h1 className="text-xl font-bold">自己紹介QR</h1>
-        <p className="text-sm text-zinc-600">
-          まだページがありません。編集タブから作成してください。
-        </p>
+        <h1 className="text-xl font-bold">QR</h1>
+        <p className="text-sm text-zinc-600">ページがありません</p>
         <Link
           href="/pages"
           className="inline-flex rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white"

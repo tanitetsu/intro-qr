@@ -76,7 +76,7 @@ async function shareUrl(url: string, title: string): Promise<ShareStatus> {
     const payloads: ShareData[] = [
       {
         title,
-        text: `${title} の自己紹介`,
+        text: title,
         url: absoluteUrl,
       },
       { title, url: absoluteUrl },
@@ -143,24 +143,29 @@ export function QrCard({
   }
 
   async function handleShare() {
-    const result = await shareUrl(value, title);
+    const shareTitle = subtitle?.trim() || title;
+    const result = await shareUrl(value, shareTitle);
     showStatus(result);
   }
+
+  const trimmedSubtitle = subtitle?.trim() ?? "";
+  const displayName = trimmedSubtitle || title;
+  const showPageTitle = Boolean(trimmedSubtitle) && trimmedSubtitle !== title;
 
   return (
     <div className="rounded-3xl border border-black/8 bg-white p-5 shadow-sm">
       <div className="mb-5 space-y-1 text-center">
-        {subtitle ? (
-          <p className="text-2xl font-bold tracking-tight text-zinc-900">
-            {subtitle}
-          </p>
+        <p className="text-2xl font-bold tracking-tight text-zinc-900">
+          {displayName}
+        </p>
+        {showPageTitle ? (
+          <p className="text-xs font-medium text-zinc-400">{title}</p>
         ) : null}
-        <p className="text-xs font-medium text-zinc-400">{title}</p>
       </div>
       <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-2xl bg-zinc-50 p-3">
         {tooLong ? (
           <p className="px-3 text-center text-xs text-zinc-500">
-            QRを表示できません。ページ編集後に自動同期されます。
+            QRを表示できません。ページを編集してください。
           </p>
         ) : (
           <QRCodeSVG value={value} size={200} level="M" includeMargin={false} />
