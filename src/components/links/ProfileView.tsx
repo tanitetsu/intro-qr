@@ -1,4 +1,7 @@
+"use client";
+
 import { LinkCard } from "@/components/links/LinkCard";
+import { useI18n } from "@/lib/i18n/locale";
 import type { ProfilePage } from "@/lib/types";
 
 export function ProfileView({
@@ -8,6 +11,7 @@ export function ProfileView({
   page: ProfilePage;
   showPageTitle?: boolean;
 }) {
+  const { t } = useI18n();
   const interestLinks = [...page.links]
     .sort((a, b) => a.order - b.order)
     .filter((l) => l.type === "interest" || l.type === "org");
@@ -37,10 +41,12 @@ export function ProfileView({
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-zinc-800">リンク</h2>
+        <h2 className="text-sm font-semibold text-zinc-800">
+          {t("common.links")}
+        </h2>
         {ordered.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-zinc-300 bg-white/60 p-4 text-sm text-zinc-500">
-            まだリンクがありません。
+            {t("profile.noLinks")}
           </p>
         ) : (
           <div className="space-y-3">

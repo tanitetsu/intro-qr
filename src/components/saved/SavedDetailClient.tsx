@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAppData } from "@/lib/app-data";
-import { formatDateJa } from "@/lib/dates";
+import { formatDate } from "@/lib/dates";
+import { useI18n } from "@/lib/i18n/locale";
 import { updateSavedPerson } from "@/lib/storage";
 import { LinkCard } from "@/components/links/LinkCard";
 
@@ -18,6 +19,7 @@ async function fileToDataUrl(file: File): Promise<string> {
 
 export function SavedDetailClient({ savedId }: { savedId: string }) {
   const { ready, data, setData } = useAppData();
+  const { t, locale } = useI18n();
   const person = useMemo(
     () => data.savedPeople.find((p) => p.id === savedId) ?? null,
     [data.savedPeople, savedId],
@@ -25,15 +27,15 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
   const [showPhoto, setShowPhoto] = useState(false);
 
   if (!ready) {
-    return <div className="p-4 text-sm text-zinc-500">読み込み中…</div>;
+    return <div className="p-4 text-sm text-zinc-500">{t("common.loading")}</div>;
   }
 
   if (!person) {
     return (
       <div className="space-y-3 p-4">
-        <p className="text-sm">保存データが見つかりません。</p>
+        <p className="text-sm">{t("album.notFound")}</p>
         <Link href="/saved" className="text-sm text-violet-700">
-          一覧へ
+          {t("common.backToList")}
         </Link>
       </div>
     );
@@ -45,7 +47,7 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
         <div>
           <h1 className="text-xl font-bold">{person.customName}</h1>
           <p className="text-sm text-zinc-600">
-            保存日 {formatDateJa(person.savedOn)}
+            {t("album.savedOn", { date: formatDate(person.savedOn, locale) })}
           </p>
         </div>
         <button
@@ -58,13 +60,15 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
               : "bg-zinc-100 text-zinc-400"
           }`}
         >
-          写真
+          {t("common.photo")}
         </button>
       </div>
 
       <section className="space-y-3 rounded-2xl border border-black/8 bg-white p-4">
         <label className="block space-y-1">
-          <span className="text-xs font-medium text-zinc-500">表示名</span>
+          <span className="text-xs font-medium text-zinc-500">
+            {t("edit.displayName")}
+          </span>
           <input
             className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
             value={person.customName}
@@ -79,11 +83,11 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
         </label>
         <label className="block space-y-1">
           <span className="text-xs font-medium text-zinc-500">
-            場所・イベント名
+            {t("album.place")}
           </span>
           <input
             className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
-            placeholder="例: 技術書典 / 大学サークル新歓"
+            placeholder={t("album.placePlaceholder")}
             value={person.metPlaceManual}
             onChange={(e) =>
               setData(
@@ -95,7 +99,9 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
           />
         </label>
         <label className="block space-y-1">
-          <span className="text-xs font-medium text-zinc-500">メモ</span>
+          <span className="text-xs font-medium text-zinc-500">
+            {t("album.note")}
+          </span>
           <textarea
             className="min-h-20 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
             value={person.note}
@@ -108,7 +114,7 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
         </label>
         <label className="block space-y-1">
           <span className="text-xs font-medium text-zinc-500">
-            顔写真（この端末内のみ）
+            {t("album.facePhoto")}
           </span>
           <input
             type="file"
@@ -130,7 +136,7 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold">受け取ったリンク</h2>
+        <h2 className="text-sm font-semibold">{t("album.receivedLinks")}</h2>
         {person.snapshot.links
           .slice()
           .sort((a, b) => a.order - b.order)
@@ -148,7 +154,7 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={person.facePhotoDataUrl}
-            alt="顔写真"
+            alt={t("common.facePhotoAlt")}
             className="max-h-[80vh] max-w-full rounded-2xl object-contain"
           />
         </button>

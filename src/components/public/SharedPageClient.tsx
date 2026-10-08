@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useAppData } from "@/lib/app-data";
+import { useI18n } from "@/lib/i18n/locale";
 import {
   decodeSharedPage,
   encodeSharedPage,
@@ -13,6 +14,7 @@ import { ProfileView } from "@/components/links/ProfileView";
 
 export function SharedPageClient({ token }: { token: string }) {
   const { ready, data } = useAppData();
+  const { t } = useI18n();
   const page = useMemo(() => {
     const payload = decodeSharedPage(token);
     return payload
@@ -30,9 +32,9 @@ export function SharedPageClient({ token }: { token: string }) {
   if (!page) {
     return (
       <div className="mx-auto flex min-h-[50vh] max-w-md flex-col justify-center gap-3 p-6">
-        <h1 className="text-xl font-bold">無効な共有リンクです</h1>
+        <h1 className="text-xl font-bold">{t("public.invalidShare")}</h1>
         <Link href="/" className="text-sm font-medium text-violet-700">
-          ホームへ
+          {t("common.home")}
         </Link>
       </div>
     );
@@ -41,7 +43,7 @@ export function SharedPageClient({ token }: { token: string }) {
   if (!ready) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-sm text-zinc-500">
-        読み込み中…
+        {t("common.loading")}
       </div>
     );
   }

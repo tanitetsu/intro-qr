@@ -9,16 +9,23 @@ import {
   ProfileTabIcon,
   QrTabIcon,
 } from "@/components/layout/TabIcons";
+import { useI18n } from "@/lib/i18n/locale";
+import type { MessageKey } from "@/lib/i18n/messages";
 
-const navItems = [
-  { href: "/", label: "QR", Icon: QrTabIcon },
-  { href: "/pages", label: "ページ", Icon: EditTabIcon },
-  { href: "/saved", label: "保存", Icon: AlbumTabIcon },
-  { href: "/auth", label: "マイページ", Icon: ProfileTabIcon },
+const navItems: {
+  href: string;
+  labelKey: MessageKey;
+  Icon: typeof QrTabIcon;
+}[] = [
+  { href: "/", labelKey: "nav.qr", Icon: QrTabIcon },
+  { href: "/pages", labelKey: "nav.pages", Icon: EditTabIcon },
+  { href: "/saved", labelKey: "nav.album", Icon: AlbumTabIcon },
+  { href: "/auth", labelKey: "nav.account", Icon: ProfileTabIcon },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useI18n();
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-md flex-1 flex-col bg-[var(--app-bg)] text-[var(--app-fg)]">
@@ -32,11 +39,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 ? pathname === "/"
                 : pathname.startsWith(item.href);
             const Icon = item.Icon;
+            const label = t(item.labelKey);
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  aria-label={item.label}
+                  aria-label={label}
                   className={`flex h-14 flex-col items-center justify-center gap-0.5 ${
                     active ? "text-violet-700" : "text-zinc-500"
                   }`}

@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useAppData } from "@/lib/app-data";
+import { useI18n } from "@/lib/i18n/locale";
 import { createEmptyPage, deletePage, upsertPage } from "@/lib/storage";
 import { syncAllPagesToCloud } from "@/lib/supabase/auto-sync";
 
 export function PagesClient() {
   const { ready, pages, data, setData } = useAppData();
+  const { t } = useI18n();
   const [syncHint, setSyncHint] = useState("");
   const syncedOnce = useRef(false);
 
@@ -20,34 +22,37 @@ export function PagesClient() {
       if (cancelled) return;
       if (result.synced > 0) {
         setData(result.data);
-        setSyncHint("同期しました");
+        setSyncHint(t("pages.syncOk"));
       } else if (result.error === "not_logged_in") {
-        setSyncHint("ログインすると同期できます");
+        setSyncHint(t("pages.syncLogin"));
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [ready, pages.length, data, setData]);
+  }, [ready, pages.length, data, setData, t]);
 
   if (!ready) {
-    return <div className="p-4 text-sm text-zinc-500">読み込み中…</div>;
+    return <div className="p-4 text-sm text-zinc-500">{t("common.loading")}</div>;
   }
 
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">ページ</h1>
+        <h1 className="text-xl font-bold">{t("pages.title")}</h1>
         <button
           type="button"
           className="rounded-full bg-violet-600 px-3 py-2 text-sm font-medium text-white"
           onClick={() => {
-            const page = createEmptyPage(`ページ ${pages.length + 1}`);
+            const page = createEmptyPage(
+              t("pages.newTitle", { n: pages.length + 1 }),
+              t("edit.defaultDisplayName"),
+            );
             if (!pages.length) page.isDefault = true;
             setData(upsertPage(data, page));
           }}
         >
-          追加
+          {t("common.add")}
         </button>
       </div>
 
@@ -68,9 +73,9 @@ export function PagesClient() {
                 <p className="font-semibold text-zinc-900">{page.title}</p>
                 <p className="text-sm text-zinc-600">{page.displayName}</p>
                 <p className="mt-1 text-xs text-zinc-400">
-                  リンク {page.links.length} 件
-                  {page.isDefault ? " · デフォルト" : ""}
-                  {page.cloudId ? " · 同期済み" : ""}
+                  {t("pages.linkCount", { count: page.links.length })}
+                  {page.isDefault ? ` · ${t("common.default")}` : ""}
+                  {page.cloudId ? ` · ${t("common.synced")}` : ""}
                 </p>
               </div>
             </div>
@@ -79,22 +84,22 @@ export function PagesClient() {
                 href={`/pages/${page.id}/edit`}
                 className="rounded-xl bg-zinc-900 px-2 py-2 text-center text-xs font-medium text-white"
               >
-                編集
+                {t("common.edit")}
               </Link>
               <button
                 type="button"
                 className="rounded-xl border border-red-200 px-2 py-2 text-xs font-medium text-red-600"
                 onClick={() => {
                   if (pages.length <= 1) {
-                    alert("最後の1ページは削除できません");
+                    alert(t("pages.deleteLast"));
                     return;
                   }
-                  if (confirm(`「${page.title}」を削除しますか？`)) {
+                  if (confirm(t("pages.deleteConfirm", { title: page.title }))) {
                     setData(deletePage(data, page.id));
                   }
                 }}
               >
-                削除
+                {t("common.delete")}
               </button>
             </div>
           </div>

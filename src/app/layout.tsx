@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppDataProvider } from "@/lib/app-data";
+import { LocaleProvider } from "@/lib/i18n/locale";
 import { AppShell } from "@/components/layout/AppShell";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
@@ -18,7 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Intro QR",
   description:
-    "オフラインで出会った人と、関心リンク中心の自己紹介をQRで共有するアプリ",
+    "Share interest-first intros via QR — offline-friendly, with Japanese and English UI.",
   appleWebApp: {
     capable: true,
     title: "Intro QR",
@@ -41,9 +42,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <ErrorBoundary>
-          <AppDataProvider>
-            <AppShell>{children}</AppShell>
-          </AppDataProvider>
+          <LocaleProvider>
+            <AppDataProvider>
+              <AppShell>{children}</AppShell>
+            </AppDataProvider>
+          </LocaleProvider>
         </ErrorBoundary>
       </body>
     </html>

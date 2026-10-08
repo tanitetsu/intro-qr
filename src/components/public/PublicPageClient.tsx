@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useAppData } from "@/lib/app-data";
+import { useI18n } from "@/lib/i18n/locale";
 import { getPageById } from "@/lib/storage";
 import { useAutoSaveViewedPage } from "@/lib/use-auto-save-viewed-page";
 import { ProfileView } from "@/components/links/ProfileView";
 
 export function PublicPageClient({ pageId }: { pageId: string }) {
   const { ready, data } = useAppData();
+  const { t } = useI18n();
   const page = useMemo(
     () => (ready ? getPageById(data, pageId) : null),
     [ready, data, pageId],
@@ -19,7 +21,7 @@ export function PublicPageClient({ pageId }: { pageId: string }) {
   if (!ready) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-sm text-zinc-500">
-        読み込み中…
+        {t("common.loading")}
       </div>
     );
   }
@@ -27,12 +29,10 @@ export function PublicPageClient({ pageId }: { pageId: string }) {
   if (!page) {
     return (
       <div className="mx-auto flex min-h-[50vh] max-w-md flex-col justify-center gap-3 p-6">
-        <h1 className="text-xl font-bold">ページが見つかりません</h1>
-        <p className="text-sm text-zinc-600">
-          この端末にデータがない公開URLの可能性があります。
-        </p>
+        <h1 className="text-xl font-bold">{t("public.notFound")}</h1>
+        <p className="text-sm text-zinc-600">{t("public.localMissing")}</p>
         <Link href="/" className="text-sm font-medium text-violet-700">
-          ホームへ
+          {t("common.home")}
         </Link>
       </div>
     );

@@ -42,7 +42,7 @@ export function saveAppData(data: AppData) {
 export function getSortedPages(data: AppData): ProfilePage[] {
   return [...data.pages].sort((a, b) => {
     if (a.isDefault !== b.isDefault) return a.isDefault ? -1 : 1;
-    return a.title.localeCompare(b.title, "ja");
+    return a.title.localeCompare(b.title);
   });
 }
 
@@ -81,13 +81,16 @@ export function upsertPage(data: AppData, page: ProfilePage): AppData {
   return next;
 }
 
-export function createEmptyPage(title = "新しいページ"): ProfilePage {
+export function createEmptyPage(
+  title = "New page",
+  displayName = "Your name",
+): ProfilePage {
   const ts = new Date().toISOString();
   return {
     id: createId("page"),
     title,
     slug: `page-${Date.now().toString(36)}`,
-    displayName: "あなたの名前",
+    displayName,
     bio: "",
     links: [],
     isDefault: false,

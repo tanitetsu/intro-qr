@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { useI18n } from "@/lib/i18n/locale";
 
 type ShareStatus =
   | { kind: "idle" }
@@ -122,6 +123,7 @@ export function QrCard({
   title: string;
   subtitle?: string;
 }) {
+  const { t } = useI18n();
   const tooLong = value.length > 1200;
   const [status, setStatus] = useState<ShareStatus>({ kind: "idle" });
   const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -165,7 +167,7 @@ export function QrCard({
       <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-2xl bg-zinc-50 p-3">
         {tooLong ? (
           <p className="px-3 text-center text-xs text-zinc-500">
-            QRを表示できません。ページを編集してください。
+            {t("qr.tooLong")}
           </p>
         ) : (
           <QRCodeSVG value={value} size={200} level="M" includeMargin={false} />
@@ -175,7 +177,7 @@ export function QrCard({
         type="button"
         disabled={tooLong}
         onClick={() => void handleShare()}
-        aria-label="共有"
+        aria-label={t("common.share")}
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-zinc-300"
       >
         <svg
@@ -196,7 +198,7 @@ export function QrCard({
             strokeLinecap="round"
           />
         </svg>
-        共有
+        {t("common.share")}
       </button>
 
       {status.kind === "copied" ? (
@@ -204,7 +206,7 @@ export function QrCard({
           role="status"
           className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-800"
         >
-          リンクをコピーしました
+          {t("qr.copied")}
         </p>
       ) : null}
       {status.kind === "manual" ? (
@@ -213,7 +215,7 @@ export function QrCard({
           className="mt-3 space-y-1 rounded-xl bg-amber-50 px-3 py-2 text-center"
         >
           <p className="text-xs font-medium text-amber-900">
-            下のURLを長押ししてコピーしてください
+            {t("qr.manualCopy")}
           </p>
           <p className="break-all select-all text-xs text-amber-950 underline-offset-2">
             {status.url}

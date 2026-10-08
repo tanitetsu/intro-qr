@@ -3,20 +3,27 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppData } from "@/lib/app-data";
+import { useI18n } from "@/lib/i18n/locale";
 import {
   addLinkToPage,
   getPageById,
   removeLinkFromPage,
   upsertPage,
 } from "@/lib/storage";
-import { detectLinkType, guessTitleFromUrl, linkTypeLabel } from "@/lib/link-meta";
+import {
+  detectLinkType,
+  guessTitleFromUrl,
+  linkTypeMessageKey,
+} from "@/lib/link-meta";
 import { syncPageToCloud } from "@/lib/supabase/auto-sync";
 import type { AppData, LinkType, ProfilePage } from "@/lib/types";
 
 const SYNC_DEBOUNCE_MS = 900;
+const LINK_TYPES: LinkType[] = ["interest", "contact", "org", "other"];
 
 export function EditPageClient({ pageId }: { pageId: string }) {
   const { ready, data, setData } = useAppData();
+  const { t } = useI18n();
   const page = useMemo(
     () => (ready ? getPageById(data, pageId) : null),
     [ready, data, pageId],
@@ -30,10 +37,15 @@ export function EditPageClient({ pageId }: { pageId: string }) {
 
   const dataRef = useRef(data);
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tRef = useRef(t);
 
   useEffect(() => {
     dataRef.current = data;
   }, [data]);
+
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
   useEffect(() => {
     return () => {
@@ -49,12 +61,12 @@ export function EditPageClient({ pageId }: { pageId: string }) {
       if (!latest) return;
       const result = await syncPageToCloud(current, latest);
       if (result.error === "not_logged_in") {
-        setSyncHint("ログインすると同期できます");
+        setSyncHint(tRef.current("pages.syncLogin"));
         return;
       }
       if (result.error) return;
       setData(result.data);
-      setSyncHint("同期しました");
+      setSyncHint(tRef.current("pages.syncOk"));
     }, SYNC_DEBOUNCE_MS);
   }
 
@@ -76,32 +88,33 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   }
 
   if (!ready) {
-    return <div className="p-4 text-sm text-zinc-500">読み込み中…</div>;
+    return <div className="p-4 text-sm text-zinc-500">{t("common.loading")}</div>;
   }
 
   if (!page) {
     return (
       <div className="space-y-3 p-4">
-        <p className="text-sm text-zinc-600">ページが見つかりません。</p>
+        <p className="text-sm text-zinc-600">{t("edit.notFound")}</p>
         <Link href="/" className="text-sm text-violet-700">
-          ホームへ
+          {t("common.home")}
         </Link>
       </div>
     );
   }
 
   const previewHref = page.cloudId ? `/u/${page.cloudId}` : `/u/${page.id}`;
+  const defaultLinkTitle = t("edit.defaultLinkTitle");
 
   return (
     <div className="space-y-5 p-4">
       <div>
-        <h1 className="text-xl font-bold">編集</h1>
+        <h1 className="text-xl font-bold">{t("edit.title")}</h1>
         {page.cloudId ? (
           <Link
             href={previewHref}
             className="mt-1 inline-block text-xs text-zinc-400 underline-offset-2 hover:underline"
           >
-            プレビュー
+            {t("common.preview")}
           </Link>
         ) : null}
       </div>
@@ -114,7 +127,9 @@ export function EditPageClient({ pageId }: { pageId: string }) {
 
       <section className="space-y-3 rounded-2xl border border-black/8 bg-white p-4">
         <label className="block space-y-1">
-          <span className="text-xs font-medium text-zinc-500">ページ名</span>
+          <span className="text-xs font-medium text-zinc-500">
+            {t("edit.pageName")}
+          </span>
           <input
             className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
             value={page.title}
@@ -122,7 +137,9 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           />
         </label>
         <label className="block space-y-1">
-          <span className="text-xs font-medium text-zinc-500">表示名</span>
+          <span className="text-xs font-medium text-zinc-500">
+            {t("edit.displayName")}
+          </span>
           <input
             className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
             value={page.displayName}
@@ -131,7 +148,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
         </label>
         <label className="block space-y-1">
           <span className="text-xs font-medium text-zinc-500">
-            自己紹介（任意）
+            {t("edit.bio")}
           </span>
           <textarea
             className="min-h-20 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
@@ -145,12 +162,12 @@ export function EditPageClient({ pageId }: { pageId: string }) {
             checked={page.isDefault}
             onChange={(e) => patchPage({ isDefault: e.target.checked })}
           />
-          デフォルトページにする
+          {t("edit.setDefault")}
         </label>
       </section>
 
       <section className="space-y-3 rounded-2xl border border-black/8 bg-white p-4">
-        <h2 className="text-sm font-semibold">リンクを追加</h2>
+        <h2 className="text-sm font-semibold">{t("edit.addLink")}</h2>
         <input
           className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
           placeholder="https://..."
@@ -159,18 +176,18 @@ export function EditPageClient({ pageId }: { pageId: string }) {
             const next = e.target.value;
             setUrl(next);
             setType(detectLinkType(next));
-            if (!title) setTitle(guessTitleFromUrl(next));
+            if (!title) setTitle(guessTitleFromUrl(next, defaultLinkTitle));
           }}
         />
         <input
           className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
-          placeholder="タイトル"
+          placeholder={t("edit.linkTitle")}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         <input
           className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
-          placeholder="コメント（任意）"
+          placeholder={t("edit.linkComment")}
           value={comment}
           onChange={(e) => setComment(e.target.value)}
         />
@@ -179,9 +196,9 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           value={type}
           onChange={(e) => setType(e.target.value as LinkType)}
         >
-          {Object.entries(linkTypeLabel).map(([value, label]) => (
+          {LINK_TYPES.map((value) => (
             <option key={value} value={value}>
-              {label}
+              {t(linkTypeMessageKey[value])}
             </option>
           ))}
         </select>
@@ -190,12 +207,12 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           className="w-full rounded-xl bg-violet-600 px-3 py-2.5 text-sm font-medium text-white"
           onClick={() => {
             if (!url.trim()) {
-              alert("URLを入力してください");
+              alert(t("edit.urlRequired"));
               return;
             }
             commit(
               addLinkToPage(data, page.id, {
-                title: title.trim() || guessTitleFromUrl(url),
+                title: title.trim() || guessTitleFromUrl(url, defaultLinkTitle),
                 url: url.trim(),
                 comment: comment.trim() || undefined,
                 type,
@@ -207,14 +224,14 @@ export function EditPageClient({ pageId }: { pageId: string }) {
             setType("interest");
           }}
         >
-          リンクを追加
+          {t("edit.addLink")}
         </button>
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold">登録済みリンク</h2>
+        <h2 className="text-sm font-semibold">{t("edit.savedLinks")}</h2>
         {page.links.length === 0 ? (
-          <p className="text-sm text-zinc-500">まだありません</p>
+          <p className="text-sm text-zinc-500">{t("edit.noneYet")}</p>
         ) : (
           [...page.links]
             .sort((a, b) => a.order - b.order)
@@ -227,7 +244,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                   <div>
                     <p className="text-sm font-semibold">{link.title}</p>
                     <p className="text-xs text-zinc-500">
-                      {linkTypeLabel[link.type]}
+                      {t(linkTypeMessageKey[link.type])}
                     </p>
                     <p className="mt-1 break-all text-xs text-zinc-400">
                       {link.url}
@@ -240,7 +257,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                       commit(removeLinkFromPage(data, page.id, link.id))
                     }
                   >
-                    削除
+                    {t("common.delete")}
                   </button>
                 </div>
               </div>

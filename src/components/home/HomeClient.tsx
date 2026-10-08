@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useAppData } from "@/lib/app-data";
+import { useI18n } from "@/lib/i18n/locale";
 import { setActivePageId } from "@/lib/storage";
 import { encodeSharedPage } from "@/lib/share-codec";
 import { PageCarousel } from "@/components/swipe/PageCarousel";
@@ -10,6 +11,7 @@ import { QrCard } from "@/components/qr/QrCard";
 
 export function HomeClient() {
   const { ready, pages, activePage, data, setData } = useAppData();
+  const { t } = useI18n();
 
   const origin = useMemo(() => {
     if (typeof window === "undefined") return "";
@@ -19,7 +21,7 @@ export function HomeClient() {
   if (!ready) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center text-sm text-zinc-500">
-        読み込み中…
+        {t("common.loading")}
       </div>
     );
   }
@@ -27,13 +29,13 @@ export function HomeClient() {
   if (!pages.length || !activePage) {
     return (
       <div className="space-y-4 p-4">
-        <h1 className="text-xl font-bold">QR</h1>
-        <p className="text-sm text-zinc-600">ページがありません</p>
+        <h1 className="text-xl font-bold">{t("home.emptyTitle")}</h1>
+        <p className="text-sm text-zinc-600">{t("home.emptyBody")}</p>
         <Link
           href="/pages"
           className="inline-flex rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white"
         >
-          ページを作る
+          {t("home.createPage")}
         </Link>
       </div>
     );

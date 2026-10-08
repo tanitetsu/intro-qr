@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n/locale";
+import type { Locale } from "@/lib/i18n/messages";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   getSessionUser,
@@ -10,6 +12,7 @@ import {
 } from "@/lib/supabase/auth";
 
 export function AuthClient() {
+  const { t, locale, setLocale } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -21,25 +24,54 @@ export function AuthClient() {
     getSessionUser().then((user) => setUserEmail(user?.email ?? null));
   }, []);
 
+  const languageSwitcher = (
+    <div className="rounded-2xl border border-black/8 bg-white p-4">
+      <p className="mb-2 text-xs font-medium text-zinc-500">
+        {t("auth.language")}
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        {(
+          [
+            ["ja", "auth.languageJa"],
+            ["en", "auth.languageEn"],
+          ] as const
+        ).map(([value, labelKey]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setLocale(value as Locale)}
+            className={`rounded-xl px-3 py-2.5 text-sm ${
+              locale === value
+                ? "bg-violet-600 font-medium text-white"
+                : "border border-zinc-200 text-zinc-700"
+            }`}
+          >
+            {t(labelKey)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
   if (!isSupabaseConfigured()) {
     return (
       <div className="space-y-3 p-4">
-        <h1 className="text-xl font-bold">ログイン</h1>
-        <p className="text-sm text-zinc-600">
-          Supabase の環境変数が未設定です。
-        </p>
+        <h1 className="text-xl font-bold">{t("auth.title")}</h1>
+        <p className="text-sm text-zinc-600">{t("auth.missingConfig")}</p>
+        {languageSwitcher}
       </div>
     );
   }
 
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-bold">ログイン</h1>
+      <h1 className="text-xl font-bold">{t("auth.title")}</h1>
 
       {userEmail ? (
         <div className="space-y-3 rounded-2xl border border-black/8 bg-white p-4">
           <p className="text-sm">
-            ログイン中: <span className="font-medium">{userEmail}</span>
+            {t("auth.signedInPrefix")}{" "}
+            <span className="font-medium">{userEmail}</span>
           </p>
           <button
             type="button"
@@ -47,10 +79,10 @@ export function AuthClient() {
             onClick={async () => {
               await signOut();
               setUserEmail(null);
-              setMessage("ログアウトしました");
+              setMessage(t("auth.loggedOut"));
             }}
           >
-            ログアウト
+            {t("auth.logout")}
           </button>
         </div>
       ) : (
@@ -65,7 +97,7 @@ export function AuthClient() {
           <input
             className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
             type="password"
-            placeholder="パスワード（6文字以上）"
+            placeholder={t("auth.passwordPlaceholder")}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -84,10 +116,10 @@ export function AuthClient() {
                   return;
                 }
                 setUserEmail(data.user?.email ?? email);
-                setMessage("ログインしました");
+                setMessage(t("auth.loggedIn"));
               }}
             >
-              ログイン
+              {t("auth.login")}
             </button>
             <button
               type="button"
@@ -103,14 +135,16 @@ export function AuthClient() {
                   return;
                 }
                 setUserEmail(data.user?.email ?? email);
-                setMessage("アカウントを作成しました");
+                setMessage(t("auth.accountCreated"));
               }}
             >
-              新規登録
+              {t("auth.signUp")}
             </button>
           </div>
         </div>
       )}
+
+      {languageSwitcher}
 
       {message ? <p className="text-sm text-zinc-600">{message}</p> : null}
     </div>

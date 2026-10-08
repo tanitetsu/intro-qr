@@ -3,20 +3,22 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useAppData } from "@/lib/app-data";
-import { formatDateJa } from "@/lib/dates";
+import { formatDate } from "@/lib/dates";
+import { useI18n } from "@/lib/i18n/locale";
 import { deleteSavedPerson } from "@/lib/storage";
 
 export function SavedListClient() {
   const { ready, savedPeople, data, setData } = useAppData();
+  const { t, locale } = useI18n();
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   if (!ready) {
-    return <div className="p-4 text-sm text-zinc-500">読み込み中…</div>;
+    return <div className="p-4 text-sm text-zinc-500">{t("common.loading")}</div>;
   }
 
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-bold">アルバム</h1>
+      <h1 className="text-xl font-bold">{t("album.title")}</h1>
 
       {savedPeople.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-8" />
@@ -33,7 +35,7 @@ export function SavedListClient() {
                     {person.customName}
                   </p>
                   <p className="text-xs text-zinc-500">
-                    {formatDateJa(person.savedOn)}
+                    {formatDate(person.savedOn, locale)}
                     {person.metPlaceManual
                       ? ` · ${person.metPlaceManual}`
                       : ""}
@@ -57,7 +59,7 @@ export function SavedListClient() {
                       : "bg-zinc-100 text-zinc-400"
                   }`}
                 >
-                  写真
+                  {t("common.photo")}
                 </button>
               </div>
               <div className="mt-3 flex gap-2">
@@ -65,18 +67,18 @@ export function SavedListClient() {
                   href={`/saved/${person.id}`}
                   className="flex-1 rounded-xl bg-zinc-900 px-3 py-2 text-center text-xs font-medium text-white"
                 >
-                  詳細
+                  {t("common.detail")}
                 </Link>
                 <button
                   type="button"
                   className="rounded-xl border border-red-200 px-3 py-2 text-xs font-medium text-red-600"
                   onClick={() => {
-                    if (confirm("この保存を削除しますか？")) {
+                    if (confirm(t("album.deleteConfirm"))) {
                       setData(deleteSavedPerson(data, person.id));
                     }
                   }}
                 >
-                  削除
+                  {t("common.delete")}
                 </button>
               </div>
             </div>
@@ -93,7 +95,7 @@ export function SavedListClient() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photoPreview}
-            alt="顔写真"
+            alt={t("common.facePhotoAlt")}
             className="max-h-[80vh] max-w-full rounded-2xl object-contain"
           />
         </button>

@@ -1,4 +1,5 @@
 import type { LinkType } from "@/lib/types";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 export function detectLinkType(url: string): LinkType {
   const u = url.toLowerCase();
@@ -23,15 +24,23 @@ export function detectLinkType(url: string): LinkType {
   return "other";
 }
 
-export function guessTitleFromUrl(url: string): string {
+export function guessTitleFromUrl(url: string, fallback = "Link"): string {
   try {
     const host = new URL(url).hostname.replace(/^www\./, "");
     return host;
   } catch {
-    return "リンク";
+    return fallback;
   }
 }
 
+export const linkTypeMessageKey: Record<LinkType, MessageKey> = {
+  interest: "linkType.interest",
+  contact: "linkType.contact",
+  org: "linkType.org",
+  other: "linkType.other",
+};
+
+/** @deprecated prefer linkTypeMessageKey + t() */
 export const linkTypeLabel: Record<LinkType, string> = {
   interest: "関心",
   contact: "連絡先",

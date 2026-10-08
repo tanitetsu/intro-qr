@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAppData } from "@/lib/app-data";
+import { useI18n } from "@/lib/i18n/locale";
 import { getPageById } from "@/lib/storage";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { fetchCloudPage } from "@/lib/supabase/pages";
@@ -12,6 +13,7 @@ import type { ProfilePage } from "@/lib/types";
 
 export function CloudOrLocalPublicPage({ pageId }: { pageId: string }) {
   const { ready, data } = useAppData();
+  const { t } = useI18n();
   const [page, setPage] = useState<ProfilePage | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -46,7 +48,9 @@ export function CloudOrLocalPublicPage({ pageId }: { pageId: string }) {
         }
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "読み込みに失敗しました");
+          setError(
+            e instanceof Error ? e.message : t("public.loadFailed"),
+          );
           setLoading(false);
         }
       }
@@ -55,12 +59,12 @@ export function CloudOrLocalPublicPage({ pageId }: { pageId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [ready, data, pageId]);
+  }, [ready, data, pageId, t]);
 
   if (!ready || loading) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-sm text-zinc-500">
-        読み込み中…
+        {t("common.loading")}
       </div>
     );
   }
@@ -68,13 +72,12 @@ export function CloudOrLocalPublicPage({ pageId }: { pageId: string }) {
   if (!page) {
     return (
       <div className="mx-auto flex min-h-[50vh] max-w-md flex-col justify-center gap-3 p-6">
-        <h1 className="text-xl font-bold">ページが見つかりません</h1>
+        <h1 className="text-xl font-bold">{t("public.notFound")}</h1>
         <p className="text-sm text-zinc-600">
-          {error ||
-            "クラウド未公開か、URLが古い可能性があります。持ち主がログインしてページを編集すると自動同期されます。"}
+          {error || t("public.cloudHint")}
         </p>
         <Link href="/" className="text-sm font-medium text-violet-700">
-          ホームへ
+          {t("common.home")}
         </Link>
       </div>
     );
