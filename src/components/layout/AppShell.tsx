@@ -14,7 +14,7 @@ const navItems = [
   { href: "/", label: "QR", Icon: QrTabIcon },
   { href: "/pages", label: "ページ", Icon: EditTabIcon },
   { href: "/saved", label: "保存", Icon: AlbumTabIcon },
-  { href: "/auth", label: "ログイン", Icon: ProfileTabIcon },
+  { href: "/auth", label: "マイページ", Icon: ProfileTabIcon },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
