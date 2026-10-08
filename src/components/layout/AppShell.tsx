@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { InAppBrowserBanner } from "@/components/layout/InAppBrowserBanner";
 
 const navItems = [
   { href: "/", label: "QR" },
@@ -19,6 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-md flex-1 flex-col bg-[var(--app-bg)] text-[var(--app-fg)]">
+      <InAppBrowserBanner />
       <main className={`flex-1 ${hideNav ? "" : "pb-24"}`}>{children}</main>
       {!hideNav && (
         <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-md -translate-x-1/2 border-t border-black/10 bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur">
