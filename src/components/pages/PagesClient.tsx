@@ -115,14 +115,17 @@ export function PagesClient() {
                         return;
                       }
                       const cloud = await upsertCloudPage(page, userId);
-                      setData(
-                        upsertPage(data, {
+                      setData((prev) =>
+                        upsertPage(prev, {
                           ...page,
                           cloudId: cloud.cloudId,
                           updatedAt: new Date().toISOString(),
                         }),
                       );
-                      setSyncMessage(`「${page.title}」をクラウド同期しました`);
+                      const publicUrl = `${window.location.origin}/u/${cloud.cloudId}`;
+                      setSyncMessage(
+                        `「${page.title}」を同期しました。公開URL: ${publicUrl}`,
+                      );
                     } catch (e) {
                       const msg =
                         e instanceof Error ? e.message : "同期に失敗しました";

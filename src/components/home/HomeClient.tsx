@@ -83,7 +83,28 @@ export function HomeClient() {
                 <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
                   まだクラウド未同期です。他端末向け本公開は「ページ」タブでログイン後に同期してください。
                 </p>
-              ) : null}
+              ) : (
+                <div className="space-y-2 rounded-xl bg-emerald-50 px-3 py-2">
+                  <p className="text-xs font-medium text-emerald-800">
+                    本番公開URL（これを共有）
+                  </p>
+                  <p className="break-all text-[11px] text-emerald-900">{qrUrl}</p>
+                  <button
+                    type="button"
+                    className="w-full rounded-lg bg-emerald-700 px-3 py-2 text-xs font-medium text-white"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(qrUrl);
+                        alert("公開URLをコピーしました");
+                      } catch {
+                        alert(qrUrl);
+                      }
+                    }}
+                  >
+                    URLをコピー
+                  </button>
+                </div>
+              )}
               <div className="flex gap-2">
                 <Link
                   href={cloudPath ?? `/u/${page.id}`}
