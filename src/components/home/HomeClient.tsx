@@ -43,11 +43,6 @@ export function HomeClient() {
 
   return (
     <div className="space-y-4 py-4">
-      <div className="px-4">
-        <p className="text-xs font-medium text-violet-700">Intro QR</p>
-        <h1 className="text-xl font-bold tracking-tight">今すぐ見せる</h1>
-      </div>
-
       <PageCarousel
         items={pages.map((p) => ({ id: p.id, label: p.title }))}
         activeId={activePage.id}

@@ -37,10 +37,7 @@ export function PagesClient() {
   return (
     <div className="space-y-4 p-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">自己紹介ページ</h1>
-          <p className="text-sm text-zinc-600">場に応じて使い分けできます</p>
-        </div>
+        <h1 className="text-xl font-bold">ページ</h1>
         <button
           type="button"
           className="rounded-full bg-violet-600 px-3 py-2 text-sm font-medium text-white"

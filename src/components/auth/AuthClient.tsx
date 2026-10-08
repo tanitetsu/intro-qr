@@ -35,12 +35,7 @@ export function AuthClient() {
 
   return (
     <div className="space-y-4 p-4">
-      <div>
-        <h1 className="text-xl font-bold">クラウド公開用ログイン</h1>
-        <p className="text-sm text-zinc-600">
-          公開ページを他端末のQRで見せるときに使います。保存した相手データは端末内のままです。
-        </p>
-      </div>
+      <h1 className="text-xl font-bold">ログイン</h1>
 
       {userEmail ? (
         <div className="space-y-3 rounded-2xl border border-black/8 bg-white p-4">

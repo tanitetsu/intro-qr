@@ -16,15 +16,10 @@ export function SavedListClient() {
 
   return (
     <div className="space-y-4 p-4">
-      <div>
-        <h1 className="text-xl font-bold">保存した人</h1>
-        <p className="text-sm text-zinc-600">新しい順（保存順）</p>
-      </div>
+      <h1 className="text-xl font-bold">アルバム</h1>
 
       {savedPeople.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-4 text-sm text-zinc-600">
-          まだ保存がありません。他人の公開ページを開くと自動でここに追加されます。
-        </div>
+        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-8" />
       ) : (
         <div className="space-y-3">
           {savedPeople.map((person) => (

@@ -149,11 +149,13 @@ export function QrCard({
 
   return (
     <div className="rounded-3xl border border-black/8 bg-white p-5 shadow-sm">
-      <div className="mb-4 space-y-1 text-center">
-        <p className="text-xs font-medium text-violet-700">{title}</p>
+      <div className="mb-5 space-y-1 text-center">
         {subtitle ? (
-          <p className="text-sm text-zinc-600">{subtitle}</p>
+          <p className="text-2xl font-bold tracking-tight text-zinc-900">
+            {subtitle}
+          </p>
         ) : null}
+        <p className="text-xs font-medium text-zinc-400">{title}</p>
       </div>
       <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-2xl bg-zinc-50 p-3">
         {tooLong ? (
@@ -168,7 +170,7 @@ export function QrCard({
         type="button"
         disabled={tooLong}
         onClick={() => void handleShare()}
-        aria-label="リンクを共有"
+        aria-label="共有"
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-zinc-300"
       >
         <svg
@@ -189,7 +191,7 @@ export function QrCard({
             strokeLinecap="round"
           />
         </svg>
-        リンクを共有
+        共有
       </button>
 
       {status.kind === "copied" ? (

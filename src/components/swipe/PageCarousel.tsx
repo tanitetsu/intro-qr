@@ -82,9 +82,6 @@ export function PageCarousel({
           </div>
         ))}
       </div>
-      <p className="px-4 text-center text-xs text-zinc-500">
-        左右にスワイプでページ切替
-      </p>
     </div>
   );
 }
