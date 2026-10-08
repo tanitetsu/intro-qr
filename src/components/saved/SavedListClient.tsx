@@ -23,7 +23,7 @@ export function SavedListClient() {
 
       {savedPeople.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-4 text-sm text-zinc-600">
-          まだ保存がありません。公開ページの「この人を保存」から追加できます。
+          まだ保存がありません。他人の公開ページを開くと自動でここに追加されます。
         </div>
       ) : (
         <div className="space-y-3">

@@ -53,7 +53,9 @@ export function getActivePage(data: AppData): ProfilePage | null {
 }
 
 export function getPageById(data: AppData, id: string): ProfilePage | null {
-  return data.pages.find((p) => p.id === id) ?? null;
+  return (
+    data.pages.find((p) => p.id === id || p.cloudId === id) ?? null
+  );
 }
 
 export function setActivePageId(data: AppData, pageId: string): AppData {
@@ -165,6 +167,13 @@ export function getSavedPeopleSorted(data: AppData): SavedPerson[] {
   );
 }
 
+export function findSavedBySourcePageId(
+  data: AppData,
+  sourcePageId: string,
+): SavedPerson | null {
+  return data.savedPeople.find((p) => p.sourcePageId === sourcePageId) ?? null;
+}
+
 export function savePersonFromPage(
   data: AppData,
   page: ProfilePage,
@@ -176,9 +185,15 @@ export function savePersonFromPage(
     facePhotoDataUrl?: string;
   } = {},
 ): AppData {
+  const existing =
+    findSavedBySourcePageId(data, page.id) ??
+    (page.cloudId ? findSavedBySourcePageId(data, page.cloudId) : null);
+  if (existing) {
+    return data;
+  }
   const person: SavedPerson = {
     id: createId("saved"),
-    sourcePageId: page.id,
+    sourcePageId: page.cloudId || page.id,
     displayName: page.displayName,
     customName: input.customName?.trim() || page.displayName,
     note: input.note?.trim() || "",
@@ -230,4 +245,13 @@ export function resetToSeed(): AppData {
   const seed = createSeedData();
   saveAppData(seed);
   return seed;
+}
+
+export function isOwnPage(data: AppData, page: ProfilePage): boolean {
+  return data.pages.some(
+    (p) =>
+      p.id === page.id ||
+      (!!page.cloudId && p.cloudId === page.cloudId) ||
+      (!!p.cloudId && p.cloudId === page.id),
+  );
 }

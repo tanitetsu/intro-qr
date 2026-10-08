@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAppData } from "@/lib/app-data";
 import {
   addLinkToPage,
@@ -10,7 +10,10 @@ import {
   upsertPage,
 } from "@/lib/storage";
 import { detectLinkType, guessTitleFromUrl, linkTypeLabel } from "@/lib/link-meta";
-import type { LinkType } from "@/lib/types";
+import { syncPageToCloud } from "@/lib/supabase/auto-sync";
+import type { AppData, LinkType, ProfilePage } from "@/lib/types";
+
+const SYNC_DEBOUNCE_MS = 900;
 
 export function EditPageClient({ pageId }: { pageId: string }) {
   const { ready, data, setData } = useAppData();
@@ -23,6 +26,50 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
   const [type, setType] = useState<LinkType>("interest");
+  const [syncHint, setSyncHint] = useState("");
+
+  const dataRef = useRef(data);
+  dataRef.current = data;
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (syncTimer.current) clearTimeout(syncTimer.current);
+    };
+  }, []);
+
+  function scheduleCloudSync(targetPageId: string) {
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(async () => {
+      const current = dataRef.current;
+      const latest = getPageById(current, targetPageId);
+      if (!latest) return;
+      const result = await syncPageToCloud(current, latest);
+      if (result.error === "not_logged_in") {
+        setSyncHint("ログインすると自動でクラウド同期されます");
+        return;
+      }
+      if (result.error) return;
+      setData(result.data);
+      setSyncHint("クラウドへ自動同期しました");
+    }, SYNC_DEBOUNCE_MS);
+  }
+
+  function commit(next: AppData) {
+    setData(next);
+    scheduleCloudSync(pageId);
+  }
+
+  function patchPage(patch: Partial<ProfilePage>) {
+    if (!page) return;
+    commit(
+      upsertPage(data, {
+        ...page,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      }),
+    );
+  }
 
   if (!ready) {
     return <div className="p-4 text-sm text-zinc-500">読み込み中…</div>;
@@ -39,17 +86,28 @@ export function EditPageClient({ pageId }: { pageId: string }) {
     );
   }
 
+  const previewHref = page.cloudId ? `/u/${page.cloudId}` : `/u/${page.id}`;
+
   return (
     <div className="space-y-5 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold">ページ編集</h1>
-          <p className="text-sm text-zinc-600">関心リンクを中心に整えます</p>
-        </div>
-        <Link href={`/u/${page.id}`} className="text-sm font-medium text-violet-700">
-          公開ページ
-        </Link>
+      <div>
+        <h1 className="text-xl font-bold">ページ編集</h1>
+        <p className="text-sm text-zinc-600">関心リンクを中心に整えます</p>
+        {page.cloudId ? (
+          <Link
+            href={previewHref}
+            className="mt-1 inline-block text-xs text-zinc-400 underline-offset-2 hover:underline"
+          >
+            プレビュー
+          </Link>
+        ) : null}
       </div>
+
+      {syncHint ? (
+        <p className="rounded-xl bg-zinc-100 px-3 py-2 text-xs text-zinc-700">
+          {syncHint}
+        </p>
+      ) : null}
 
       <section className="space-y-3 rounded-2xl border border-black/8 bg-white p-4">
         <label className="block space-y-1">
@@ -57,15 +115,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           <input
             className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
             value={page.title}
-            onChange={(e) =>
-              setData(
-                upsertPage(data, {
-                  ...page,
-                  title: e.target.value,
-                  updatedAt: new Date().toISOString(),
-                }),
-              )
-            }
+            onChange={(e) => patchPage({ title: e.target.value })}
           />
         </label>
         <label className="block space-y-1">
@@ -73,15 +123,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           <input
             className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
             value={page.displayName}
-            onChange={(e) =>
-              setData(
-                upsertPage(data, {
-                  ...page,
-                  displayName: e.target.value,
-                  updatedAt: new Date().toISOString(),
-                }),
-              )
-            }
+            onChange={(e) => patchPage({ displayName: e.target.value })}
           />
         </label>
         <label className="block space-y-1">
@@ -91,30 +133,14 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           <textarea
             className="min-h-20 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
             value={page.bio ?? ""}
-            onChange={(e) =>
-              setData(
-                upsertPage(data, {
-                  ...page,
-                  bio: e.target.value,
-                  updatedAt: new Date().toISOString(),
-                }),
-              )
-            }
+            onChange={(e) => patchPage({ bio: e.target.value })}
           />
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
             checked={page.isDefault}
-            onChange={(e) =>
-              setData(
-                upsertPage(data, {
-                  ...page,
-                  isDefault: e.target.checked,
-                  updatedAt: new Date().toISOString(),
-                }),
-              )
-            }
+            onChange={(e) => patchPage({ isDefault: e.target.checked })}
           />
           デフォルトページにする
         </label>
@@ -164,7 +190,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
               alert("URLを入力してください");
               return;
             }
-            setData(
+            commit(
               addLinkToPage(data, page.id, {
                 title: title.trim() || guessTitleFromUrl(url),
                 url: url.trim(),
@@ -208,7 +234,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                     type="button"
                     className="text-xs font-medium text-red-600"
                     onClick={() =>
-                      setData(removeLinkFromPage(data, page.id, link.id))
+                      commit(removeLinkFromPage(data, page.id, link.id))
                     }
                   >
                     削除
