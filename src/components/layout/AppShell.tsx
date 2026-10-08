@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     active ? "text-violet-700" : "text-zinc-500"
                   }`}
                 >
-                  <Icon className="h-6 w-6" />
+                  <Icon className="h-7 w-7" />
                 </Link>
               </li>
             );
