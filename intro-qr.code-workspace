@@ -1,0 +1,12 @@
+{
+  "folders": [
+    {
+      "name": "intro-qr",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "editor.formatOnSave": true
+  }
+}
