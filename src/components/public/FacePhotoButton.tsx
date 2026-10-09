@@ -48,6 +48,15 @@ export function FacePhotoButton({
     return () => window.clearTimeout(timer);
   }, [savedHint]);
 
+  useEffect(() => {
+    if (!consentOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setConsentOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [consentOpen]);
+
   if (!ready || hidden || own) return null;
 
   async function onFileChange(file: File | undefined) {
