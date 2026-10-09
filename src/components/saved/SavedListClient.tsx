@@ -21,7 +21,7 @@ export function SavedListClient() {
       <h1 className="text-xl font-bold">{t("album.title")}</h1>
 
       {savedPeople.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 bg-white p-8" />
+        <p className="text-sm text-zinc-600">{t("album.empty")}</p>
       ) : (
         <div className="space-y-3">
           {savedPeople.map((person) => (

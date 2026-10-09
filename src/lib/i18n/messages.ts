@@ -53,6 +53,7 @@ const ja = {
   "linkType.other": "その他",
 
   "album.title": "アルバム",
+  "album.empty": "まだ登録がありません。",
   "album.deleteConfirm": "この保存を削除しますか？",
   "album.notFound": "保存データが見つかりません。",
   "album.savedOn": "保存日 {date}",
@@ -156,6 +157,7 @@ const en: Record<MessageKey, string> = {
   "linkType.other": "Other",
 
   "album.title": "Album",
+  "album.empty": "No one saved yet.",
   "album.deleteConfirm": "Delete this saved person?",
   "album.notFound": "Saved person not found.",
   "album.savedOn": "Saved {date}",
