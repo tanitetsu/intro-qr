@@ -26,6 +26,22 @@ npm install
 npm run dev
 ```
 
+## Cursor ワークスペース
+
+リポ: https://github.com/tanitetsu/intro-qr
+
+**手元（Cursor デスクトップ / Web）**
+
+1. 上のリポを Clone
+2. `intro-qr.code-workspace` を Open（フォルダごと Open でも可）
+3. `.env.example` を `.env.local` にコピーして Supabase 値を入れる
+4. `npm install` → `npm run dev`
+
+**Cloud Agent**
+
+`.cursor/environment.json` で起動時に `npm install`、その後 `npm run dev` が走ります。  
+Cursor の Environment 保存画面で提案中の設定を確認して保存してください。
+
 ## 本番公開（推奨）
 
 **GitHub → Vercel 自動デプロイ** を使います。  
