@@ -8,6 +8,7 @@ type DbProfilePage = {
   slug: string;
   display_name: string;
   bio: string | null;
+  icon_data_url: string | null;
   links: ProfileLink[];
   is_default: boolean;
   created_at: string;
@@ -22,6 +23,7 @@ function toLocalPage(row: DbProfilePage): ProfilePage {
     slug: row.slug,
     displayName: row.display_name,
     bio: row.bio ?? "",
+    iconDataUrl: row.icon_data_url || undefined,
     links: Array.isArray(row.links) ? row.links : [],
     isDefault: row.is_default,
     createdAt: row.created_at,
@@ -36,6 +38,7 @@ function toDbPayload(page: ProfilePage, ownerId: string) {
     slug: page.slug,
     display_name: page.displayName,
     bio: page.bio ?? "",
+    icon_data_url: page.iconDataUrl?.trim() || null,
     links: page.links.map((l, index) => ({
       id: l.id,
       title: l.title,
