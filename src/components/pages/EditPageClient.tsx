@@ -10,16 +10,11 @@ import {
   removeLinkFromPage,
   upsertPage,
 } from "@/lib/storage";
-import {
-  detectLinkType,
-  guessTitleFromUrl,
-  linkTypeMessageKey,
-} from "@/lib/link-meta";
+import { detectLinkType, guessTitleFromUrl } from "@/lib/link-meta";
 import { syncPageToCloud } from "@/lib/supabase/auto-sync";
-import type { AppData, LinkType, ProfilePage } from "@/lib/types";
+import type { AppData, ProfilePage } from "@/lib/types";
 
 const SYNC_DEBOUNCE_MS = 900;
-const LINK_TYPES: LinkType[] = ["interest", "contact", "org", "other"];
 
 export function EditPageClient({ pageId }: { pageId: string }) {
   const { ready, data, setData } = useAppData();
@@ -30,9 +25,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   );
 
   const [url, setUrl] = useState("");
-  const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
-  const [type, setType] = useState<LinkType>("interest");
   const [syncHint, setSyncHint] = useState("");
 
   const dataRef = useRef(data);
@@ -172,18 +165,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
           placeholder="https://..."
           value={url}
-          onChange={(e) => {
-            const next = e.target.value;
-            setUrl(next);
-            setType(detectLinkType(next));
-            if (!title) setTitle(guessTitleFromUrl(next, defaultLinkTitle));
-          }}
-        />
-        <input
-          className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
-          placeholder={t("edit.linkTitle")}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => setUrl(e.target.value)}
         />
         <input
           className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
@@ -191,37 +173,25 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           value={comment}
           onChange={(e) => setComment(e.target.value)}
         />
-        <select
-          className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
-          value={type}
-          onChange={(e) => setType(e.target.value as LinkType)}
-        >
-          {LINK_TYPES.map((value) => (
-            <option key={value} value={value}>
-              {t(linkTypeMessageKey[value])}
-            </option>
-          ))}
-        </select>
         <button
           type="button"
           className="w-full rounded-xl bg-violet-600 px-3 py-2.5 text-sm font-medium text-white"
           onClick={() => {
-            if (!url.trim()) {
+            const trimmedUrl = url.trim();
+            if (!trimmedUrl) {
               alert(t("edit.urlRequired"));
               return;
             }
             commit(
               addLinkToPage(data, page.id, {
-                title: title.trim() || guessTitleFromUrl(url, defaultLinkTitle),
-                url: url.trim(),
+                title: guessTitleFromUrl(trimmedUrl, defaultLinkTitle),
+                url: trimmedUrl,
                 comment: comment.trim() || undefined,
-                type,
+                type: detectLinkType(trimmedUrl),
               }),
             );
             setUrl("");
-            setTitle("");
             setComment("");
-            setType("interest");
           }}
         >
           {t("edit.addLink")}
@@ -241,18 +211,15 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                 className="rounded-2xl border border-black/8 bg-white p-3"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold">{link.title}</p>
-                    <p className="text-xs text-zinc-500">
-                      {t(linkTypeMessageKey[link.type])}
-                    </p>
-                    <p className="mt-1 break-all text-xs text-zinc-400">
-                      {link.url}
-                    </p>
+                  <div className="min-w-0">
+                    <p className="break-all text-sm font-semibold">{link.url}</p>
+                    {link.comment ? (
+                      <p className="mt-1 text-xs text-zinc-500">{link.comment}</p>
+                    ) : null}
                   </div>
                   <button
                     type="button"
-                    className="text-xs font-medium text-red-600"
+                    className="shrink-0 text-xs font-medium text-red-600"
                     onClick={() =>
                       commit(removeLinkFromPage(data, page.id, link.id))
                     }
