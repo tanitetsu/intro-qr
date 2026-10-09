@@ -11,6 +11,7 @@ import {
 } from "@/lib/share-codec";
 import { useAutoSaveViewedPage } from "@/lib/use-auto-save-viewed-page";
 import { ProfileView } from "@/components/links/ProfileView";
+import { FacePhotoButton } from "@/components/public/FacePhotoButton";
 
 export function SharedPageClient({ token }: { token: string }) {
   const { ready, data } = useAppData();
@@ -51,6 +52,7 @@ export function SharedPageClient({ token }: { token: string }) {
   return (
     <div className="mx-auto max-w-md px-4 py-6">
       <ProfileView page={page} showPageTitle />
+      <FacePhotoButton page={page} hidden={isOwnShared} />
     </div>
   );
 }
