@@ -3,6 +3,8 @@
 一時トンネルは使いません。  
 **安定した本番URL**を作るための手順です。
 
+デプロイ・Git の運用ルール（クリッピング / AI_Cripping と同仕様）: [`git-workflow.md`](git-workflow.md)
+
 ---
 
 ## 全体像
