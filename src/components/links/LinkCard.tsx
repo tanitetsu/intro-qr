@@ -28,6 +28,13 @@ export function LinkCard({
           alt=""
           className="h-36 w-full object-cover"
           onError={() => setThumbBroken(true)}
+          onLoad={(e) => {
+            // YouTube の欠番プレースホルダは 120x90 の極小 JPEG を返すことがある
+            const img = e.currentTarget;
+            if (img.naturalWidth <= 120 && img.naturalHeight <= 90) {
+              setThumbBroken(true);
+            }
+          }}
         />
       ) : null}
       <div className="space-y-1 p-4">
