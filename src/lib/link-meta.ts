@@ -1,5 +1,4 @@
 import type { LinkType } from "@/lib/types";
-import type { MessageKey } from "@/lib/i18n/messages";
 
 const SNS_HOST_LABELS: { match: (host: string) => boolean; label: string }[] = [
   {
@@ -65,10 +64,3 @@ export function guessTitleFromUrl(url: string, fallback = "Link"): string {
     return fallback;
   }
 }
-
-export const linkTypeMessageKey: Record<LinkType, MessageKey> = {
-  interest: "linkType.interest",
-  contact: "linkType.contact",
-  org: "linkType.org",
-  other: "linkType.other",
-};
