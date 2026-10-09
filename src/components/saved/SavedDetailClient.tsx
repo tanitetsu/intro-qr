@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAppData } from "@/lib/app-data";
 import { formatDate } from "@/lib/dates";
+import { suggestMeetingPlace } from "@/lib/geolocation";
 import { useI18n } from "@/lib/i18n/locale";
 import { updateSavedPerson } from "@/lib/storage";
 import { LinkCard } from "@/components/links/LinkCard";
@@ -25,6 +26,8 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
     [data.savedPeople, savedId],
   );
   const [showPhoto, setShowPhoto] = useState(false);
+  const [locationBusy, setLocationBusy] = useState(false);
+  const [locationHint, setLocationHint] = useState("");
 
   if (!ready) {
     return <div className="p-4 text-sm text-zinc-500">{t("common.loading")}</div>;
@@ -39,6 +42,25 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
         </Link>
       </div>
     );
+  }
+
+  async function fillFromCurrentLocation() {
+    if (!person) return;
+    setLocationBusy(true);
+    setLocationHint("");
+    const place = await suggestMeetingPlace(locale);
+    setLocationBusy(false);
+    if (!place) {
+      setLocationHint(t("album.locationFailed"));
+      return;
+    }
+    setData(
+      updateSavedPerson(data, person.id, {
+        metPlaceAuto: place,
+        metPlaceManual: place,
+      }),
+    );
+    setLocationHint(t("album.locationAutoHint"));
   }
 
   return (
@@ -81,23 +103,42 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
             }
           />
         </label>
-        <label className="block space-y-1">
-          <span className="text-xs font-medium text-zinc-500">
-            {t("album.place")}
-          </span>
-          <input
-            className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
-            placeholder={t("album.placePlaceholder")}
-            value={person.metPlaceManual}
-            onChange={(e) =>
-              setData(
-                updateSavedPerson(data, person.id, {
-                  metPlaceManual: e.target.value,
-                }),
-              )
-            }
-          />
-        </label>
+        <div className="space-y-1">
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-zinc-500">
+              {t("album.place")}
+            </span>
+            <input
+              className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
+              placeholder={t("album.placePlaceholder")}
+              value={person.metPlaceManual}
+              onChange={(e) =>
+                setData(
+                  updateSavedPerson(data, person.id, {
+                    metPlaceManual: e.target.value,
+                  }),
+                )
+              }
+            />
+          </label>
+          <button
+            type="button"
+            disabled={locationBusy}
+            onClick={() => void fillFromCurrentLocation()}
+            className="text-xs font-medium text-violet-700 disabled:opacity-60"
+          >
+            {locationBusy
+              ? t("album.locationBusy")
+              : t("album.useCurrentLocation")}
+          </button>
+          {locationHint ||
+          (person.metPlaceAuto &&
+            person.metPlaceManual === person.metPlaceAuto) ? (
+            <p className="text-xs text-zinc-500">
+              {locationHint || t("album.locationAutoHint")}
+            </p>
+          ) : null}
+        </div>
         <label className="block space-y-1">
           <span className="text-xs font-medium text-zinc-500">
             {t("album.note")}

@@ -184,6 +184,7 @@ export function savePersonFromPage(
     customName?: string;
     note?: string;
     metPlaceManual?: string;
+    metPlaceAuto?: string;
     tags?: string[];
     facePhotoDataUrl?: string;
   } = {},
@@ -194,6 +195,9 @@ export function savePersonFromPage(
   if (existing) {
     return data;
   }
+  const metPlaceAuto = input.metPlaceAuto?.trim() || undefined;
+  const metPlaceManual =
+    input.metPlaceManual?.trim() || metPlaceAuto || "";
   const person: SavedPerson = {
     id: createId("saved"),
     sourcePageId: page.cloudId || page.id,
@@ -203,7 +207,8 @@ export function savePersonFromPage(
     tags: input.tags ?? [],
     savedOn: toDateString(),
     savedAt: new Date().toISOString(),
-    metPlaceManual: input.metPlaceManual?.trim() || "",
+    metPlaceAuto,
+    metPlaceManual,
     facePhotoDataUrl: input.facePhotoDataUrl,
     snapshot: {
       title: page.title,

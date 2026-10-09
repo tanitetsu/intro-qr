@@ -36,8 +36,8 @@ export function SavedListClient() {
                   </p>
                   <p className="text-xs text-zinc-500">
                     {formatDate(person.savedOn, locale)}
-                    {person.metPlaceManual
-                      ? ` · ${person.metPlaceManual}`
+                    {person.metPlaceManual || person.metPlaceAuto
+                      ? ` · ${person.metPlaceManual || person.metPlaceAuto}`
                       : ""}
                   </p>
                   {person.note ? (
