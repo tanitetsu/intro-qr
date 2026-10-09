@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import type { ProfileLink } from "@/lib/types";
 import { displayThumbnailUrl, linkTypeLabel } from "@/lib/link-meta";
 
@@ -9,6 +12,7 @@ export function LinkCard({
   compact?: boolean;
 }) {
   const thumbnailUrl = !compact ? displayThumbnailUrl(link) : undefined;
+  const [thumbBroken, setThumbBroken] = useState(false);
 
   return (
     <a
@@ -17,12 +21,13 @@ export function LinkCard({
       rel="noreferrer"
       className="block overflow-hidden rounded-2xl border border-black/8 bg-white shadow-sm transition active:scale-[0.99]"
     >
-      {thumbnailUrl ? (
+      {thumbnailUrl && !thumbBroken ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={thumbnailUrl}
           alt=""
           className="h-36 w-full object-cover"
+          onError={() => setThumbBroken(true)}
         />
       ) : null}
       <div className="space-y-1 p-4">
