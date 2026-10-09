@@ -39,11 +39,3 @@ export const linkTypeMessageKey: Record<LinkType, MessageKey> = {
   org: "linkType.org",
   other: "linkType.other",
 };
-
-/** @deprecated prefer linkTypeMessageKey + t() */
-export const linkTypeLabel: Record<LinkType, string> = {
-  interest: "関心",
-  contact: "連絡先",
-  org: "所属",
-  other: "その他",
-};
