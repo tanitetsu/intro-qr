@@ -43,7 +43,8 @@ npm run dev
 Cursor の Environment 保存画面で提案中の設定を確認して保存してください。
 
 - 修正前: `./check-git-sync.sh --agent`（[クリッピングと同仕様](docs/git-workflow.md)）
-- 本番: merge 後は **push で Vercel 任せ**。merge だけでは Agent はデプロイしない。CLI は依頼時のみ [`scripts/deploy-vercel.sh`](scripts/deploy-vercel.sh)
+- 本番: merge 後は **push で Vercel 任せ**。merge だけでは Agent は CLI デプロイしない。CLI は依頼時のみ [`scripts/deploy-vercel.sh`](scripts/deploy-vercel.sh)
+- **デバッグモード**で指示したとき: テスト完了後は「マージして」と言わなくても PR を merge 可（テスト省略は不可）
 
 ## 本番公開（推奨）
 
