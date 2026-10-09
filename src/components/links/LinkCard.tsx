@@ -1,5 +1,5 @@
 import type { ProfileLink } from "@/lib/types";
-import { linkTypeLabel } from "@/lib/link-meta";
+import { displayThumbnailUrl, linkTypeLabel } from "@/lib/link-meta";
 
 export function LinkCard({
   link,
@@ -8,6 +8,8 @@ export function LinkCard({
   link: ProfileLink;
   compact?: boolean;
 }) {
+  const thumbnailUrl = !compact ? displayThumbnailUrl(link) : undefined;
+
   return (
     <a
       href={link.url}
@@ -15,10 +17,10 @@ export function LinkCard({
       rel="noreferrer"
       className="block overflow-hidden rounded-2xl border border-black/8 bg-white shadow-sm transition active:scale-[0.99]"
     >
-      {link.thumbnailUrl && !compact ? (
+      {thumbnailUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={link.thumbnailUrl}
+          src={thumbnailUrl}
           alt=""
           className="h-36 w-full object-cover"
         />
