@@ -1,0 +1,15 @@
+---
+description: PC / Cloud Agent で修正開始前に GitHub main とのズレ・衝突見込みを確認する（AI_Cripping 同仕様）
+alwaysApply: true
+---
+# Git 同期チェック
+
+詳細: `docs/git-workflow.md` / `check-git-sync.ps1`（Windows）/ `check-git-sync.sh`（Linux・Cloud Agent）
+
+## 要点
+
+- 正本は GitHub の `main`
+- **PC**: 修正・デプロイ前に `.\check-git-sync.ps1 -PromptPull`
+- **Cloud Agent**: コード修正に入る**前に**必ず `./check-git-sync.sh --agent`
+- `--agent`: 遅れのみ・衝突なし・きれい → 自動 pull。ぶつかりそう／分岐 → **exit 1**
+- `scripts/deploy-vercel.sh`: `origin/main` 一致＋きれいな作業ツリー。遅れ／分岐なら中止。`--skip-git-sync-check` は明示時のみ

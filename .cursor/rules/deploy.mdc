@@ -1,0 +1,12 @@
+---
+description: 本番デプロイルール（AI_Cripping / クリッピングと同仕様・Vercel）
+alwaysApply: true
+---
+# intro-qr デプロイ
+
+- 正本: `docs/git-workflow.md`。Vercel 初回: `docs/GITHUB_VERCEL_SETUP.md`
+- **merge / PR 完了だけでは本番デプロイしない**（ユーザーが「デプロイして」等と明示したときだけ CLI を使う）
+- **通常の本番反映**: `main` に merge 済み → **push** → Vercel Git 連携が **1 本**デプロイ。Agent は push 後に `vercel` を叩かない
+- **同時デプロイ禁止**: Vercel の自動ビルドと `vercel --prod` / `deploy-vercel.sh` を同時に走らせない
+- CLI が必要なとき: 最新 `origin/main`・作業ツリーきれい → `./scripts/deploy-vercel.sh`（先に `--dry-run`）
+- 一時トンネル（trycloudflare / loca.lt）は本番共有禁止
