@@ -4,13 +4,7 @@ import { LinkCard } from "@/components/links/LinkCard";
 import { useI18n } from "@/lib/i18n/locale";
 import type { ProfilePage } from "@/lib/types";
 
-export function ProfileView({
-  page,
-  showPageTitle = false,
-}: {
-  page: ProfilePage;
-  showPageTitle?: boolean;
-}) {
+export function ProfileView({ page }: { page: ProfilePage }) {
   const { t } = useI18n();
   const interestLinks = [...page.links]
     .sort((a, b) => a.order - b.order)
@@ -27,11 +21,6 @@ export function ProfileView({
   return (
     <div className="space-y-5">
       <header className="space-y-2">
-        {showPageTitle ? (
-          <p className="text-xs font-medium tracking-wide text-violet-700">
-            {page.title}
-          </p>
-        ) : null}
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
           {page.displayName}
         </h1>
@@ -41,9 +30,6 @@ export function ProfileView({
       </header>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-zinc-800">
-          {t("common.links")}
-        </h2>
         {ordered.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-zinc-300 bg-white/60 p-4 text-sm text-zinc-500">
             {t("profile.noLinks")}
