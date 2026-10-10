@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n/locale";
 import { getPageById } from "@/lib/storage";
 import { useAutoSaveViewedPage } from "@/lib/use-auto-save-viewed-page";
 import { ProfileView } from "@/components/links/ProfileView";
+import { FacePhotoButton } from "@/components/public/FacePhotoButton";
 
 export function PublicPageClient({ pageId }: { pageId: string }) {
   const { ready, data } = useAppData();
@@ -41,6 +42,7 @@ export function PublicPageClient({ pageId }: { pageId: string }) {
   return (
     <div className="mx-auto max-w-md px-4 py-6">
       <ProfileView page={page} showPageTitle />
+      <FacePhotoButton page={page} />
     </div>
   );
 }

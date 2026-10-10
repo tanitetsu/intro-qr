@@ -55,3 +55,4 @@ vercel --prod
 - 共有するのは本番URLだけ
 - trycloudflare / loca.lt は開発確認用のみ
 - SQL（`docs/supabase-schema.sql`）未実行なら先に実行
+- Git・デプロイの正本: [`git-workflow.md`](git-workflow.md)（通常は `main` push → Vercel 1 本。CLI は依頼時のみ `scripts/deploy-vercel.sh`）

@@ -8,11 +8,16 @@ create table if not exists public.profile_pages (
   slug text not null,
   display_name text not null,
   bio text,
+  icon_data_url text,
   links jsonb not null default '[]'::jsonb,
   is_default boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- 既存テーブル向け
+alter table public.profile_pages
+  add column if not exists icon_data_url text;
 
 create unique index if not exists profile_pages_owner_slug_uidx
   on public.profile_pages (owner_id, slug);

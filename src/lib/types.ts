@@ -18,6 +18,8 @@ export type ProfilePage = {
   slug: string;
   displayName: string;
   bio?: string;
+  /** プロフィールアイコン（data URL）。未設定時は表示しない */
+  iconDataUrl?: string;
   links: ProfileLink[];
   isDefault: boolean;
   updatedAt: string;
