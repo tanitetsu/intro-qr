@@ -39,15 +39,24 @@ function toDbPayload(page: ProfilePage, ownerId: string) {
     display_name: page.displayName,
     bio: page.bio ?? "",
     icon_data_url: page.iconDataUrl?.trim() || null,
-    links: page.links.map((l, index) => ({
-      id: l.id,
-      title: l.title,
-      url: l.url,
-      comment: l.comment,
-      type: l.type,
-      order: l.order ?? index,
-      // サムネは共有サイズ肥大化を避けるため送らない
-    })),
+    links: page.links.map((l, index) => {
+      // data: URL は肥大化するため除外。http(s) のサムネ URL は同期する
+      const thumb = l.thumbnailUrl?.trim();
+      const thumbnailUrl =
+        thumb &&
+        (thumb.startsWith("https://") || thumb.startsWith("http://"))
+          ? thumb
+          : undefined;
+      return {
+        id: l.id,
+        title: l.title,
+        url: l.url,
+        comment: l.comment,
+        type: l.type,
+        order: l.order ?? index,
+        ...(thumbnailUrl ? { thumbnailUrl } : {}),
+      };
+    }),
     is_default: page.isDefault,
     updated_at: new Date().toISOString(),
   };

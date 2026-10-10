@@ -12,14 +12,17 @@ import {
 } from "@/lib/storage";
 import {
   detectLinkType,
+  fetchLinkMeta,
   guessTitleFromUrl,
   linkTypeMessageKey,
+  resolveLinkThumbnail,
 } from "@/lib/link-meta";
 import { fileToIconDataUrl } from "@/lib/image";
 import { syncPageToCloud } from "@/lib/supabase/auto-sync";
 import type { AppData, LinkType, ProfilePage } from "@/lib/types";
 
 const SYNC_DEBOUNCE_MS = 900;
+const META_DEBOUNCE_MS = 450;
 const LINK_TYPES: LinkType[] = ["interest", "contact", "org", "other"];
 
 export function EditPageClient({ pageId }: { pageId: string }) {
@@ -34,12 +37,17 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
   const [type, setType] = useState<LinkType>("interest");
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
+  const [metaBusy, setMetaBusy] = useState(false);
   const [syncHint, setSyncHint] = useState("");
   const [iconBusy, setIconBusy] = useState(false);
   const iconInputRef = useRef<HTMLInputElement>(null);
 
   const dataRef = useRef(data);
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const metaTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const metaRequestId = useRef(0);
+  const titleTouched = useRef(false);
   const tRef = useRef(t);
 
   useEffect(() => {
@@ -53,8 +61,31 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   useEffect(() => {
     return () => {
       if (syncTimer.current) clearTimeout(syncTimer.current);
+      if (metaTimer.current) clearTimeout(metaTimer.current);
     };
   }, []);
+
+  function scheduleLinkMeta(nextUrl: string) {
+    if (metaTimer.current) clearTimeout(metaTimer.current);
+    const trimmed = nextUrl.trim();
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+      setThumbnailUrl(undefined);
+      setMetaBusy(false);
+      return;
+    }
+    setThumbnailUrl(resolveLinkThumbnail(trimmed));
+    const requestId = ++metaRequestId.current;
+    setMetaBusy(true);
+    metaTimer.current = setTimeout(async () => {
+      const meta = await fetchLinkMeta(trimmed);
+      if (requestId !== metaRequestId.current) return;
+      setThumbnailUrl(meta.thumbnailUrl);
+      if (!titleTouched.current && meta.title) {
+        setTitle(meta.title);
+      }
+      setMetaBusy(false);
+    }, META_DEBOUNCE_MS);
+  }
 
   function scheduleCloudSync(targetPageId: string) {
     if (syncTimer.current) clearTimeout(syncTimer.current);
@@ -242,14 +273,20 @@ export function EditPageClient({ pageId }: { pageId: string }) {
             const next = e.target.value;
             setUrl(next);
             setType(detectLinkType(next));
-            if (!title) setTitle(guessTitleFromUrl(next, defaultLinkTitle));
+            if (!titleTouched.current) {
+              setTitle(guessTitleFromUrl(next, defaultLinkTitle));
+            }
+            scheduleLinkMeta(next);
           }}
         />
         <input
           className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
           placeholder={t("edit.linkTitle")}
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            titleTouched.current = true;
+            setTitle(e.target.value);
+          }}
         />
         <input
           className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
@@ -268,6 +305,16 @@ export function EditPageClient({ pageId }: { pageId: string }) {
             </option>
           ))}
         </select>
+        {thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumbnailUrl}
+            alt=""
+            className="h-28 w-full rounded-xl object-cover"
+          />
+        ) : metaBusy ? (
+          <p className="text-xs text-zinc-400">{t("common.loading")}</p>
+        ) : null}
         <button
           type="button"
           className="w-full rounded-xl bg-violet-600 px-3 py-2.5 text-sm font-medium text-white"
@@ -276,18 +323,27 @@ export function EditPageClient({ pageId }: { pageId: string }) {
               alert(t("edit.urlRequired"));
               return;
             }
+            const trimmedUrl = url.trim();
             commit(
               addLinkToPage(data, page.id, {
-                title: title.trim() || guessTitleFromUrl(url, defaultLinkTitle),
-                url: url.trim(),
+                title:
+                  title.trim() ||
+                  guessTitleFromUrl(trimmedUrl, defaultLinkTitle),
+                url: trimmedUrl,
                 comment: comment.trim() || undefined,
                 type,
+                thumbnailUrl:
+                  thumbnailUrl || resolveLinkThumbnail(trimmedUrl),
               }),
             );
             setUrl("");
             setTitle("");
             setComment("");
             setType("interest");
+            setThumbnailUrl(undefined);
+            titleTouched.current = false;
+            metaRequestId.current += 1;
+            setMetaBusy(false);
           }}
         >
           {t("edit.addLink")}
@@ -301,33 +357,45 @@ export function EditPageClient({ pageId }: { pageId: string }) {
         ) : (
           [...page.links]
             .sort((a, b) => a.order - b.order)
-            .map((link) => (
-              <div
-                key={link.id}
-                className="rounded-2xl border border-black/8 bg-white p-3"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-semibold">{link.title}</p>
-                    <p className="text-xs text-zinc-500">
-                      {t(linkTypeMessageKey[link.type])}
-                    </p>
-                    <p className="mt-1 break-all text-xs text-zinc-400">
-                      {link.url}
-                    </p>
+            .map((link) => {
+              const thumb =
+                link.thumbnailUrl || resolveLinkThumbnail(link.url);
+              return (
+                <div
+                  key={link.id}
+                  className="overflow-hidden rounded-2xl border border-black/8 bg-white"
+                >
+                  {thumb ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={thumb}
+                      alt=""
+                      className="h-28 w-full object-cover"
+                    />
+                  ) : null}
+                  <div className="flex items-start justify-between gap-2 p-3">
+                    <div>
+                      <p className="text-sm font-semibold">{link.title}</p>
+                      <p className="text-xs text-zinc-500">
+                        {t(linkTypeMessageKey[link.type])}
+                      </p>
+                      <p className="mt-1 break-all text-xs text-zinc-400">
+                        {link.url}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-red-600"
+                      onClick={() =>
+                        commit(removeLinkFromPage(data, page.id, link.id))
+                      }
+                    >
+                      {t("common.delete")}
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="text-xs font-medium text-red-600"
-                    onClick={() =>
-                      commit(removeLinkFromPage(data, page.id, link.id))
-                    }
-                  >
-                    {t("common.delete")}
-                  </button>
                 </div>
-              </div>
-            ))
+              );
+            })
         )}
       </section>
     </div>
