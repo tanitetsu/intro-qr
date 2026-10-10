@@ -14,16 +14,14 @@ import {
   detectLinkType,
   fetchLinkMeta,
   guessTitleFromUrl,
-  linkTypeMessageKey,
   resolveLinkThumbnail,
 } from "@/lib/link-meta";
 import { fileToIconDataUrl } from "@/lib/image";
 import { syncPageToCloud } from "@/lib/supabase/auto-sync";
-import type { AppData, LinkType, ProfilePage } from "@/lib/types";
+import type { AppData, ProfilePage } from "@/lib/types";
 
 const SYNC_DEBOUNCE_MS = 900;
 const META_DEBOUNCE_MS = 450;
-const LINK_TYPES: LinkType[] = ["interest", "contact", "org", "other"];
 
 export function EditPageClient({ pageId }: { pageId: string }) {
   const { ready, data, setData } = useAppData();
@@ -34,9 +32,8 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   );
 
   const [url, setUrl] = useState("");
-  const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
-  const [type, setType] = useState<LinkType>("interest");
+  const [resolvedTitle, setResolvedTitle] = useState<string | undefined>();
   const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
   const [metaBusy, setMetaBusy] = useState(false);
   const [syncHint, setSyncHint] = useState("");
@@ -47,7 +44,6 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const metaTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const metaRequestId = useRef(0);
-  const titleTouched = useRef(false);
   const tRef = useRef(t);
 
   useEffect(() => {
@@ -70,18 +66,20 @@ export function EditPageClient({ pageId }: { pageId: string }) {
     const trimmed = nextUrl.trim();
     if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
       setThumbnailUrl(undefined);
+      setResolvedTitle(undefined);
       setMetaBusy(false);
       return;
     }
     setThumbnailUrl(resolveLinkThumbnail(trimmed));
+    setResolvedTitle(undefined);
     const requestId = ++metaRequestId.current;
     setMetaBusy(true);
     metaTimer.current = setTimeout(async () => {
       const meta = await fetchLinkMeta(trimmed);
       if (requestId !== metaRequestId.current) return;
       setThumbnailUrl(meta.thumbnailUrl);
-      if (!titleTouched.current && meta.title) {
-        setTitle(meta.title);
+      if (meta.title) {
+        setResolvedTitle(meta.title);
       }
       setMetaBusy(false);
     }, META_DEBOUNCE_MS);
@@ -272,20 +270,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           onChange={(e) => {
             const next = e.target.value;
             setUrl(next);
-            setType(detectLinkType(next));
-            if (!titleTouched.current) {
-              setTitle(guessTitleFromUrl(next, defaultLinkTitle));
-            }
             scheduleLinkMeta(next);
-          }}
-        />
-        <input
-          className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
-          placeholder={t("edit.linkTitle")}
-          value={title}
-          onChange={(e) => {
-            titleTouched.current = true;
-            setTitle(e.target.value);
           }}
         />
         <input
@@ -294,17 +279,6 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           value={comment}
           onChange={(e) => setComment(e.target.value)}
         />
-        <select
-          className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
-          value={type}
-          onChange={(e) => setType(e.target.value as LinkType)}
-        >
-          {LINK_TYPES.map((value) => (
-            <option key={value} value={value}>
-              {t(linkTypeMessageKey[value])}
-            </option>
-          ))}
-        </select>
         {thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -319,29 +293,27 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           type="button"
           className="w-full rounded-xl bg-violet-600 px-3 py-2.5 text-sm font-medium text-white"
           onClick={() => {
-            if (!url.trim()) {
+            const trimmedUrl = url.trim();
+            if (!trimmedUrl) {
               alert(t("edit.urlRequired"));
               return;
             }
-            const trimmedUrl = url.trim();
             commit(
               addLinkToPage(data, page.id, {
                 title:
-                  title.trim() ||
+                  resolvedTitle?.trim() ||
                   guessTitleFromUrl(trimmedUrl, defaultLinkTitle),
                 url: trimmedUrl,
                 comment: comment.trim() || undefined,
-                type,
+                type: detectLinkType(trimmedUrl),
                 thumbnailUrl:
                   thumbnailUrl || resolveLinkThumbnail(trimmedUrl),
               }),
             );
             setUrl("");
-            setTitle("");
             setComment("");
-            setType("interest");
+            setResolvedTitle(undefined);
             setThumbnailUrl(undefined);
-            titleTouched.current = false;
             metaRequestId.current += 1;
             setMetaBusy(false);
           }}
@@ -374,18 +346,19 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                     />
                   ) : null}
                   <div className="flex items-start justify-between gap-2 p-3">
-                    <div>
-                      <p className="text-sm font-semibold">{link.title}</p>
-                      <p className="text-xs text-zinc-500">
-                        {t(linkTypeMessageKey[link.type])}
-                      </p>
-                      <p className="mt-1 break-all text-xs text-zinc-400">
+                    <div className="min-w-0">
+                      <p className="break-all text-sm font-semibold">
                         {link.url}
                       </p>
+                      {link.comment ? (
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {link.comment}
+                        </p>
+                      ) : null}
                     </div>
                     <button
                       type="button"
-                      className="text-xs font-medium text-red-600"
+                      className="shrink-0 text-xs font-medium text-red-600"
                       onClick={() =>
                         commit(removeLinkFromPage(data, page.id, link.id))
                       }

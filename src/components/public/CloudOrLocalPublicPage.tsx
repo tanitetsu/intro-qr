@@ -86,7 +86,7 @@ export function CloudOrLocalPublicPage({ pageId }: { pageId: string }) {
 
   return (
     <div className="mx-auto max-w-md px-4 py-6">
-      <ProfileView page={page} showPageTitle />
+      <ProfileView page={page} />
       <FacePhotoButton page={page} />
     </div>
   );
