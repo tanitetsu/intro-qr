@@ -15,6 +15,7 @@ import {
   guessTitleFromUrl,
   linkTypeMessageKey,
 } from "@/lib/link-meta";
+import { fileToIconDataUrl } from "@/lib/image";
 import { syncPageToCloud } from "@/lib/supabase/auto-sync";
 import type { AppData, LinkType, ProfilePage } from "@/lib/types";
 
@@ -34,6 +35,8 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   const [comment, setComment] = useState("");
   const [type, setType] = useState<LinkType>("interest");
   const [syncHint, setSyncHint] = useState("");
+  const [iconBusy, setIconBusy] = useState(false);
+  const iconInputRef = useRef<HTMLInputElement>(null);
 
   const dataRef = useRef(data);
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -146,6 +149,69 @@ export function EditPageClient({ pageId }: { pageId: string }) {
             onChange={(e) => patchPage({ displayName: e.target.value })}
           />
         </label>
+        <div className="space-y-2">
+          <span className="block text-xs font-medium text-zinc-500">
+            {t("edit.icon")}
+          </span>
+          <p className="text-xs text-zinc-400">{t("edit.iconHint")}</p>
+          {page.iconDataUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={page.iconDataUrl}
+              alt={t("edit.iconAlt")}
+              className="h-20 w-20 rounded-full object-cover"
+            />
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={iconBusy}
+              className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-800 disabled:opacity-50"
+              onClick={() => iconInputRef.current?.click()}
+            >
+              {t("edit.iconChange")}
+            </button>
+            {page.iconDataUrl ? (
+              <button
+                type="button"
+                disabled={iconBusy}
+                className="rounded-xl px-3 py-2 text-sm font-medium text-red-600 disabled:opacity-50"
+                onClick={() => {
+                  if (!page) return;
+                  const { iconDataUrl: _removed, ...rest } = page;
+                  commit(
+                    upsertPage(data, {
+                      ...rest,
+                      updatedAt: new Date().toISOString(),
+                    }),
+                  );
+                }}
+              >
+                {t("edit.iconRemove")}
+              </button>
+            ) : null}
+          </div>
+          <input
+            ref={iconInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              void (async () => {
+                setIconBusy(true);
+                try {
+                  const iconDataUrl = await fileToIconDataUrl(file);
+                  patchPage({ iconDataUrl });
+                } finally {
+                  setIconBusy(false);
+                }
+              })();
+            }}
+          />
+        </div>
         <label className="block space-y-1">
           <span className="text-xs font-medium text-zinc-500">
             {t("edit.bio")}

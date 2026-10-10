@@ -24,6 +24,8 @@ export function ProfileView({
       ? [...interestLinks, ...contactLinks]
       : [...page.links].sort((a, b) => a.order - b.order);
 
+  const iconSrc = page.iconDataUrl?.trim();
+
   return (
     <div className="space-y-5">
       <header className="space-y-2">
@@ -31,6 +33,14 @@ export function ProfileView({
           <p className="text-xs font-medium tracking-wide text-violet-700">
             {page.title}
           </p>
+        ) : null}
+        {iconSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={iconSrc}
+            alt=""
+            className="h-20 w-20 rounded-full object-cover"
+          />
         ) : null}
         <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
           {page.displayName}
