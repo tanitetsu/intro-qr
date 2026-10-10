@@ -240,6 +240,21 @@ export function updateSavedPerson(
   return next;
 }
 
+/** 公開ページ閲覧中に撮った顔写真を、その相手の保存エントリへ紐づける */
+export function setFacePhotoForPage(
+  data: AppData,
+  page: ProfilePage,
+  facePhotoDataUrl: string,
+): AppData {
+  const existing =
+    findSavedBySourcePageId(data, page.id) ??
+    (page.cloudId ? findSavedBySourcePageId(data, page.cloudId) : null);
+  if (existing) {
+    return updateSavedPerson(data, existing.id, { facePhotoDataUrl });
+  }
+  return savePersonFromPage(data, page, { facePhotoDataUrl });
+}
+
 export function deleteSavedPerson(data: AppData, savedId: string): AppData {
   const next = {
     ...data,

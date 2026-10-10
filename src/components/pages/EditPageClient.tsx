@@ -10,11 +10,18 @@ import {
   removeLinkFromPage,
   upsertPage,
 } from "@/lib/storage";
-import { detectLinkType, guessTitleFromUrl } from "@/lib/link-meta";
+import {
+  detectLinkType,
+  fetchLinkMeta,
+  guessTitleFromUrl,
+  resolveLinkThumbnail,
+} from "@/lib/link-meta";
+import { fileToIconDataUrl } from "@/lib/image";
 import { syncPageToCloud } from "@/lib/supabase/auto-sync";
 import type { AppData, ProfilePage } from "@/lib/types";
 
 const SYNC_DEBOUNCE_MS = 900;
+const META_DEBOUNCE_MS = 450;
 
 export function EditPageClient({ pageId }: { pageId: string }) {
   const { ready, data, setData } = useAppData();
@@ -26,10 +33,17 @@ export function EditPageClient({ pageId }: { pageId: string }) {
 
   const [url, setUrl] = useState("");
   const [comment, setComment] = useState("");
+  const [resolvedTitle, setResolvedTitle] = useState<string | undefined>();
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | undefined>();
+  const [metaBusy, setMetaBusy] = useState(false);
   const [syncHint, setSyncHint] = useState("");
+  const [iconBusy, setIconBusy] = useState(false);
+  const iconInputRef = useRef<HTMLInputElement>(null);
 
   const dataRef = useRef(data);
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const metaTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const metaRequestId = useRef(0);
   const tRef = useRef(t);
 
   useEffect(() => {
@@ -43,8 +57,33 @@ export function EditPageClient({ pageId }: { pageId: string }) {
   useEffect(() => {
     return () => {
       if (syncTimer.current) clearTimeout(syncTimer.current);
+      if (metaTimer.current) clearTimeout(metaTimer.current);
     };
   }, []);
+
+  function scheduleLinkMeta(nextUrl: string) {
+    if (metaTimer.current) clearTimeout(metaTimer.current);
+    const trimmed = nextUrl.trim();
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+      setThumbnailUrl(undefined);
+      setResolvedTitle(undefined);
+      setMetaBusy(false);
+      return;
+    }
+    setThumbnailUrl(resolveLinkThumbnail(trimmed));
+    setResolvedTitle(undefined);
+    const requestId = ++metaRequestId.current;
+    setMetaBusy(true);
+    metaTimer.current = setTimeout(async () => {
+      const meta = await fetchLinkMeta(trimmed);
+      if (requestId !== metaRequestId.current) return;
+      setThumbnailUrl(meta.thumbnailUrl);
+      if (meta.title) {
+        setResolvedTitle(meta.title);
+      }
+      setMetaBusy(false);
+    }, META_DEBOUNCE_MS);
+  }
 
   function scheduleCloudSync(targetPageId: string) {
     if (syncTimer.current) clearTimeout(syncTimer.current);
@@ -139,6 +178,69 @@ export function EditPageClient({ pageId }: { pageId: string }) {
             onChange={(e) => patchPage({ displayName: e.target.value })}
           />
         </label>
+        <div className="space-y-2">
+          <span className="block text-xs font-medium text-zinc-500">
+            {t("edit.icon")}
+          </span>
+          <p className="text-xs text-zinc-400">{t("edit.iconHint")}</p>
+          {page.iconDataUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={page.iconDataUrl}
+              alt={t("edit.iconAlt")}
+              className="h-20 w-20 rounded-full object-cover"
+            />
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={iconBusy}
+              className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm font-medium text-zinc-800 disabled:opacity-50"
+              onClick={() => iconInputRef.current?.click()}
+            >
+              {t("edit.iconChange")}
+            </button>
+            {page.iconDataUrl ? (
+              <button
+                type="button"
+                disabled={iconBusy}
+                className="rounded-xl px-3 py-2 text-sm font-medium text-red-600 disabled:opacity-50"
+                onClick={() => {
+                  if (!page) return;
+                  const { iconDataUrl: _removed, ...rest } = page;
+                  commit(
+                    upsertPage(data, {
+                      ...rest,
+                      updatedAt: new Date().toISOString(),
+                    }),
+                  );
+                }}
+              >
+                {t("edit.iconRemove")}
+              </button>
+            ) : null}
+          </div>
+          <input
+            ref={iconInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              void (async () => {
+                setIconBusy(true);
+                try {
+                  const iconDataUrl = await fileToIconDataUrl(file);
+                  patchPage({ iconDataUrl });
+                } finally {
+                  setIconBusy(false);
+                }
+              })();
+            }}
+          />
+        </div>
         <label className="block space-y-1">
           <span className="text-xs font-medium text-zinc-500">
             {t("edit.bio")}
@@ -165,7 +267,11 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
           placeholder="https://..."
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) => {
+            const next = e.target.value;
+            setUrl(next);
+            scheduleLinkMeta(next);
+          }}
         />
         <input
           className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
@@ -173,6 +279,16 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           value={comment}
           onChange={(e) => setComment(e.target.value)}
         />
+        {thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={thumbnailUrl}
+            alt=""
+            className="h-28 w-full rounded-xl object-cover"
+          />
+        ) : metaBusy ? (
+          <p className="text-xs text-zinc-400">{t("common.loading")}</p>
+        ) : null}
         <button
           type="button"
           className="w-full rounded-xl bg-violet-600 px-3 py-2.5 text-sm font-medium text-white"
@@ -184,14 +300,22 @@ export function EditPageClient({ pageId }: { pageId: string }) {
             }
             commit(
               addLinkToPage(data, page.id, {
-                title: guessTitleFromUrl(trimmedUrl, defaultLinkTitle),
+                title:
+                  resolvedTitle?.trim() ||
+                  guessTitleFromUrl(trimmedUrl, defaultLinkTitle),
                 url: trimmedUrl,
                 comment: comment.trim() || undefined,
                 type: detectLinkType(trimmedUrl),
+                thumbnailUrl:
+                  thumbnailUrl || resolveLinkThumbnail(trimmedUrl),
               }),
             );
             setUrl("");
             setComment("");
+            setResolvedTitle(undefined);
+            setThumbnailUrl(undefined);
+            metaRequestId.current += 1;
+            setMetaBusy(false);
           }}
         >
           {t("edit.addLink")}
@@ -205,30 +329,46 @@ export function EditPageClient({ pageId }: { pageId: string }) {
         ) : (
           [...page.links]
             .sort((a, b) => a.order - b.order)
-            .map((link) => (
-              <div
-                key={link.id}
-                className="rounded-2xl border border-black/8 bg-white p-3"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="break-all text-sm font-semibold">{link.url}</p>
-                    {link.comment ? (
-                      <p className="mt-1 text-xs text-zinc-500">{link.comment}</p>
-                    ) : null}
+            .map((link) => {
+              const thumb =
+                link.thumbnailUrl || resolveLinkThumbnail(link.url);
+              return (
+                <div
+                  key={link.id}
+                  className="overflow-hidden rounded-2xl border border-black/8 bg-white"
+                >
+                  {thumb ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={thumb}
+                      alt=""
+                      className="h-28 w-full object-cover"
+                    />
+                  ) : null}
+                  <div className="flex items-start justify-between gap-2 p-3">
+                    <div className="min-w-0">
+                      <p className="break-all text-sm font-semibold">
+                        {link.url}
+                      </p>
+                      {link.comment ? (
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {link.comment}
+                        </p>
+                      ) : null}
+                    </div>
+                    <button
+                      type="button"
+                      className="shrink-0 text-xs font-medium text-red-600"
+                      onClick={() =>
+                        commit(removeLinkFromPage(data, page.id, link.id))
+                      }
+                    >
+                      {t("common.delete")}
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="shrink-0 text-xs font-medium text-red-600"
-                    onClick={() =>
-                      commit(removeLinkFromPage(data, page.id, link.id))
-                    }
-                  >
-                    {t("common.delete")}
-                  </button>
                 </div>
-              </div>
-            ))
+              );
+            })
         )}
       </section>
     </div>

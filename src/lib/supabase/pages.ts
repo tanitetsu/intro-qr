@@ -8,6 +8,7 @@ type DbProfilePage = {
   slug: string;
   display_name: string;
   bio: string | null;
+  icon_data_url: string | null;
   links: ProfileLink[];
   is_default: boolean;
   created_at: string;
@@ -22,6 +23,7 @@ function toLocalPage(row: DbProfilePage): ProfilePage {
     slug: row.slug,
     displayName: row.display_name,
     bio: row.bio ?? "",
+    iconDataUrl: row.icon_data_url || undefined,
     links: Array.isArray(row.links) ? row.links : [],
     isDefault: row.is_default,
     createdAt: row.created_at,
@@ -36,15 +38,25 @@ function toDbPayload(page: ProfilePage, ownerId: string) {
     slug: page.slug,
     display_name: page.displayName,
     bio: page.bio ?? "",
-    links: page.links.map((l, index) => ({
-      id: l.id,
-      title: l.title,
-      url: l.url,
-      comment: l.comment,
-      type: l.type,
-      order: l.order ?? index,
-      // サムネは共有サイズ肥大化を避けるため送らない
-    })),
+    icon_data_url: page.iconDataUrl?.trim() || null,
+    links: page.links.map((l, index) => {
+      // data: URL は肥大化するため除外。http(s) のサムネ URL は同期する
+      const thumb = l.thumbnailUrl?.trim();
+      const thumbnailUrl =
+        thumb &&
+        (thumb.startsWith("https://") || thumb.startsWith("http://"))
+          ? thumb
+          : undefined;
+      return {
+        id: l.id,
+        title: l.title,
+        url: l.url,
+        comment: l.comment,
+        type: l.type,
+        order: l.order ?? index,
+        ...(thumbnailUrl ? { thumbnailUrl } : {}),
+      };
+    }),
     is_default: page.isDefault,
     updated_at: new Date().toISOString(),
   };

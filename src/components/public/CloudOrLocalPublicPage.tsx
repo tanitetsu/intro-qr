@@ -9,6 +9,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { fetchCloudPage } from "@/lib/supabase/pages";
 import { useAutoSaveViewedPage } from "@/lib/use-auto-save-viewed-page";
 import { ProfileView } from "@/components/links/ProfileView";
+import { FacePhotoButton } from "@/components/public/FacePhotoButton";
 import type { ProfilePage } from "@/lib/types";
 
 export function CloudOrLocalPublicPage({ pageId }: { pageId: string }) {
@@ -86,6 +87,7 @@ export function CloudOrLocalPublicPage({ pageId }: { pageId: string }) {
   return (
     <div className="mx-auto max-w-md px-4 py-6">
       <ProfileView page={page} />
+      <FacePhotoButton page={page} />
     </div>
   );
 }
