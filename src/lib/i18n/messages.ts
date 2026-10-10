@@ -94,6 +94,14 @@ const ja = {
     "クラウド未公開か、URLが古い可能性があります。持ち主がログインしてページを編集すると自動同期されます。",
   "public.loadFailed": "読み込みに失敗しました",
   "public.invalidShare": "無効な共有リンクです",
+  "public.photoButton": "顔写真を撮る",
+  "public.photoConsentTitle": "顔写真の撮影",
+  "public.photoConsentBody":
+    "本人の承諾を得て顔写真を撮影してください",
+  "public.photoStart": "撮影する",
+  "public.photoCancel": "キャンセル",
+  "public.photoSaved": "アルバムに保存しました",
+  "public.photoViewExisting": "保存済みの写真を見る",
   "edit.defaultDisplayName": "あなたの名前",
   "edit.defaultPageTitle": "新しいページ",
 
@@ -202,6 +210,14 @@ const en: Record<MessageKey, string> = {
     "This page may be unpublished or the URL may be outdated. When the owner signs in and edits the page, it syncs automatically.",
   "public.loadFailed": "Failed to load",
   "public.invalidShare": "Invalid share link",
+  "public.photoButton": "Take a face photo",
+  "public.photoConsentTitle": "Face photo",
+  "public.photoConsentBody":
+    "Please take a face photo only with the person’s consent.",
+  "public.photoStart": "Take photo",
+  "public.photoCancel": "Cancel",
+  "public.photoSaved": "Saved to album",
+  "public.photoViewExisting": "View saved photo",
   "edit.defaultDisplayName": "Your name",
   "edit.defaultPageTitle": "New page",
 
