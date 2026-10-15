@@ -8,8 +8,8 @@ import { useI18n } from "@/lib/i18n/locale";
 import { deleteSavedPerson } from "@/lib/storage";
 import type { SavedPerson } from "@/lib/types";
 
-function actionButtonClass(enabled: boolean) {
-  return `rounded-full px-3 py-1.5 text-xs font-medium ${
+function chipButtonClass(enabled: boolean) {
+  return `rounded-full px-2.5 py-1 text-[11px] font-medium leading-none ${
     enabled
       ? "bg-violet-50 text-violet-700"
       : "bg-zinc-100 text-zinc-400"
@@ -33,42 +33,49 @@ export function SavedListClient() {
       {savedPeople.length === 0 ? (
         <p className="text-sm text-zinc-600">{t("album.empty")}</p>
       ) : (
-        <div className="space-y-3">
-          {savedPeople.map((person) => (
-            <div
-              key={person.id}
-              className="rounded-2xl border border-black/8 bg-white p-4 shadow-sm"
-            >
-              <div className="flex items-start gap-3">
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/u/${person.sourcePageId}`}
-                    className="font-semibold text-zinc-900 underline-offset-2 hover:underline"
-                  >
+        <div className="space-y-2">
+          {savedPeople.map((person) => {
+            const meta = [
+              formatDate(person.savedOn, locale),
+              person.metPlaceManual || person.metPlaceAuto,
+            ]
+              .filter(Boolean)
+              .join(" · ");
+
+            return (
+              <div
+                key={person.id}
+                className="flex items-center gap-2 rounded-2xl border border-black/8 bg-white px-3 py-2.5 shadow-sm"
+              >
+                <Link
+                  href={`/u/${person.sourcePageId}`}
+                  className="min-w-0 flex-1 rounded-lg py-0.5 active:bg-zinc-50"
+                >
+                  <p className="truncate text-sm font-semibold text-violet-800 underline-offset-2 hover:underline">
                     {person.customName}
-                  </Link>
-                  <p className="text-xs text-zinc-500">
-                    {formatDate(person.savedOn, locale)}
-                    {person.metPlaceManual || person.metPlaceAuto
-                      ? ` · ${person.metPlaceManual || person.metPlaceAuto}`
-                      : ""}
                   </p>
-                </div>
-                <div className="flex shrink-0 flex-col gap-2">
+                  {meta ? (
+                    <p className="truncate text-[11px] leading-tight text-zinc-500">
+                      {meta}
+                    </p>
+                  ) : null}
+                </Link>
+
+                <div className="flex shrink-0 items-center gap-1">
                   {person.facePhotoDataUrl ? (
                     <button
                       type="button"
                       onClick={() =>
                         setPhotoPreview(person.facePhotoDataUrl ?? null)
                       }
-                      className={actionButtonClass(true)}
+                      className={chipButtonClass(true)}
                     >
                       {t("common.photo")}
                     </button>
                   ) : (
                     <Link
                       href={`/saved/${person.id}`}
-                      className={`text-center ${actionButtonClass(false)}`}
+                      className={chipButtonClass(false)}
                     >
                       {t("common.photo")}
                     </Link>
@@ -76,27 +83,25 @@ export function SavedListClient() {
                   <button
                     type="button"
                     onClick={() => setMemoPreview(person)}
-                    className={actionButtonClass(!!person.note.trim())}
+                    className={chipButtonClass(!!person.note.trim())}
                   >
                     {t("album.note")}
                   </button>
+                  <button
+                    type="button"
+                    className="rounded-full border border-red-200 px-2 py-1 text-[11px] font-medium leading-none text-red-600"
+                    onClick={() => {
+                      if (confirm(t("album.deleteConfirm"))) {
+                        setData(deleteSavedPerson(data, person.id));
+                      }
+                    }}
+                  >
+                    {t("common.delete")}
+                  </button>
                 </div>
               </div>
-              <div className="mt-3 flex justify-end">
-                <button
-                  type="button"
-                  className="rounded-xl border border-red-200 px-3 py-2 text-xs font-medium text-red-600"
-                  onClick={() => {
-                    if (confirm(t("album.deleteConfirm"))) {
-                      setData(deleteSavedPerson(data, person.id));
-                    }
-                  }}
-                >
-                  {t("common.delete")}
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
