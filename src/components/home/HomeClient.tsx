@@ -24,8 +24,6 @@ function QrForPage({
 
   useEffect(() => {
     let cancelled = false;
-    setBusy(true);
-    setHint("");
     void (async () => {
       const result = await resolveQrPath(page, origin);
       if (cancelled) return;
@@ -115,7 +113,7 @@ export function HomeClient() {
         renderItem={(id) => {
           const page = pages.find((p) => p.id === id);
           if (!page) return null;
-          return <QrForPage page={page} origin={origin} />;
+          return <QrForPage key={page.id} page={page} origin={origin} />;
         }}
       />
     </div>
