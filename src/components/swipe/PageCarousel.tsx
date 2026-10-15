@@ -23,11 +23,13 @@ export function PageCarousel({
     0,
     items.findIndex((item) => item.id === activeId),
   );
+  const multi = items.length > 1;
 
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
-    const width = el.clientWidth;
+    const slide = el.querySelector<HTMLElement>("[data-page-id]");
+    const width = slide?.offsetWidth || el.clientWidth;
     el.scrollTo({ left: width * activeIndex, behavior: "smooth" });
   }, [activeIndex, items.length]);
 
@@ -39,7 +41,8 @@ export function PageCarousel({
     const onScroll = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        const width = el.clientWidth || 1;
+        const slide = el.querySelector<HTMLElement>("[data-page-id]");
+        const width = slide?.offsetWidth || el.clientWidth || 1;
         const index = Math.round(el.scrollLeft / width);
         const item = items[index];
         if (item && item.id !== activeId) onChange(item.id);
@@ -55,19 +58,24 @@ export function PageCarousel({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-center gap-1.5 px-4">
-        {items.map((item, index) => (
-          <button
-            key={item.id}
-            type="button"
-            aria-label={item.label}
-            onClick={() => onChange(item.id)}
-            className={`h-1.5 rounded-full transition-all ${
-              index === activeIndex ? "w-6 bg-violet-600" : "w-1.5 bg-zinc-300"
-            }`}
-          />
-        ))}
-      </div>
+      {multi ? (
+        <div className="flex items-center justify-center gap-1.5 px-4">
+          {items.map((item, index) => (
+            <button
+              key={item.id}
+              type="button"
+              aria-label={item.label}
+              aria-current={index === activeIndex ? "true" : undefined}
+              onClick={() => onChange(item.id)}
+              className={`h-2 rounded-full transition-all ${
+                index === activeIndex
+                  ? "w-7 bg-violet-600"
+                  : "w-2 bg-zinc-300"
+              }`}
+            />
+          ))}
+        </div>
+      ) : null}
       <div
         ref={scrollerRef}
         className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -75,7 +83,9 @@ export function PageCarousel({
         {items.map((item, index) => (
           <div
             key={item.id}
-            className="w-full shrink-0 snap-center px-4"
+            className={`shrink-0 snap-center ${
+              multi ? "w-[88%] pl-4" : "w-full px-4"
+            } ${multi && index === items.length - 1 ? "pr-4" : ""}`}
             data-page-id={item.id}
           >
             {renderItem(item.id, index)}

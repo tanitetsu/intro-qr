@@ -178,10 +178,10 @@ export function QrCard({
         disabled={tooLong}
         onClick={() => void handleShare()}
         aria-label={t("common.share")}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-zinc-300"
+        className="mt-4 flex h-12 w-full items-center justify-center rounded-2xl bg-violet-600 text-white disabled:cursor-not-allowed disabled:bg-zinc-300"
       >
         <svg
-          className="h-5 w-5 shrink-0"
+          className="h-6 w-6 shrink-0"
           viewBox="0 0 24 24"
           fill="none"
           aria-hidden
@@ -198,7 +198,6 @@ export function QrCard({
             strokeLinecap="round"
           />
         </svg>
-        {t("common.share")}
       </button>
 
       {status.kind === "copied" ? (

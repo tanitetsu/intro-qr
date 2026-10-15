@@ -1,7 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { Cloud, CloudOff, Plus, Trash2 } from "lucide-react";
+import { PenLine } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { IconButton, IconLink } from "@/components/ui/IconButton";
 import { useAppData } from "@/lib/app-data";
 import { useI18n } from "@/lib/i18n/locale";
 import {
@@ -15,7 +17,7 @@ import { syncAllPagesToCloud } from "@/lib/supabase/auto-sync";
 export function PagesClient() {
   const { ready, pages, data, setData } = useAppData();
   const { t } = useI18n();
-  const [syncHint, setSyncHint] = useState("");
+  const [syncState, setSyncState] = useState<"idle" | "ok" | "login">("idle");
   const syncedOnce = useRef(false);
 
   useEffect(() => {
@@ -27,15 +29,15 @@ export function PagesClient() {
       if (cancelled) return;
       if (result.synced > 0) {
         setData((prev) => applyCloudIdsToPages(prev, result.syncs));
-        setSyncHint(t("pages.syncOk"));
+        setSyncState("ok");
       } else if (result.error === "not_logged_in") {
-        setSyncHint(t("pages.syncLogin"));
+        setSyncState("login");
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [ready, pages.length, data, setData, t]);
+  }, [ready, pages.length, data, setData]);
 
   if (!ready) {
     return <div className="p-4 text-sm text-zinc-500">{t("common.loading")}</div>;
@@ -43,11 +45,27 @@ export function PagesClient() {
 
   return (
     <div className="space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">{t("pages.title")}</h1>
-        <button
-          type="button"
-          className="rounded-full bg-violet-600 px-3 py-2 text-sm font-medium text-white"
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="sr-only">{t("pages.title")}</h1>
+        <div className="flex min-h-11 items-center gap-2 text-zinc-500">
+          {syncState === "ok" ? (
+            <span
+              className="inline-flex items-center gap-1.5 text-emerald-700"
+              title={t("pages.syncOk")}
+            >
+              <Cloud className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+              <span className="sr-only">{t("pages.syncOk")}</span>
+            </span>
+          ) : null}
+          {syncState === "login" ? (
+            <IconLink href="/auth" label={t("pages.syncLogin")} tone="ghost">
+              <CloudOff className="h-5 w-5" strokeWidth={1.75} aria-hidden />
+            </IconLink>
+          ) : null}
+        </div>
+        <IconButton
+          label={t("common.add")}
+          tone="primary"
           onClick={() => {
             const page = createEmptyPage(
               t("pages.newTitle", { n: pages.length + 1 }),
@@ -57,56 +75,61 @@ export function PagesClient() {
             setData(upsertPage(data, page));
           }}
         >
-          {t("common.add")}
-        </button>
+          <Plus className="h-5 w-5" strokeWidth={2.25} aria-hidden />
+        </IconButton>
       </div>
-
-      {syncHint ? (
-        <p className="rounded-xl bg-zinc-100 px-3 py-2 text-xs text-zinc-700">
-          {syncHint}
-        </p>
-      ) : null}
 
       <div className="space-y-3">
         {pages.map((page) => (
           <div
             key={page.id}
-            className="rounded-2xl border border-black/8 bg-white p-4 shadow-sm"
+            className="flex items-center gap-2 rounded-2xl border border-black/8 bg-white p-3 shadow-sm"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-semibold text-zinc-900">{page.title}</p>
-                <p className="text-sm text-zinc-600">{page.displayName}</p>
-                <p className="mt-1 text-xs text-zinc-400">
-                  {t("pages.linkCount", { count: page.links.length })}
-                  {page.isDefault ? ` · ${t("common.default")}` : ""}
-                  {page.cloudId ? ` · ${t("common.synced")}` : ""}
-                </p>
-              </div>
+            <div className="min-w-0 flex-1 px-1">
+              <p className="truncate font-semibold text-zinc-900">
+                {page.displayName}
+              </p>
+              <p className="truncate text-xs text-zinc-500">{page.title}</p>
+              <p className="mt-1 flex items-center gap-2 text-xs text-zinc-400">
+                <span aria-label={t("pages.linkCount", { count: page.links.length })}>
+                  {page.links.length}
+                </span>
+                {page.isDefault ? (
+                  <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                    ★
+                  </span>
+                ) : null}
+                {page.cloudId ? (
+                  <Cloud
+                    className="h-3.5 w-3.5 text-emerald-600"
+                    strokeWidth={2}
+                    aria-label={t("common.synced")}
+                  />
+                ) : null}
+              </p>
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Link
-                href={`/pages/${page.id}/edit`}
-                className="rounded-xl bg-zinc-900 px-2 py-2 text-center text-xs font-medium text-white"
-              >
-                {t("common.edit")}
-              </Link>
-              <button
-                type="button"
-                className="rounded-xl border border-red-200 px-2 py-2 text-xs font-medium text-red-600"
-                onClick={() => {
-                  if (pages.length <= 1) {
-                    alert(t("pages.deleteLast"));
-                    return;
-                  }
-                  if (confirm(t("pages.deleteConfirm", { title: page.title }))) {
-                    setData(deletePage(data, page.id));
-                  }
-                }}
-              >
-                {t("common.delete")}
-              </button>
-            </div>
+            <IconLink
+              href={`/pages/${page.id}/edit`}
+              label={t("common.edit")}
+              tone="neutral"
+            >
+              <PenLine className="h-5 w-5" strokeWidth={2} aria-hidden />
+            </IconLink>
+            <IconButton
+              label={t("common.delete")}
+              tone="danger"
+              onClick={() => {
+                if (pages.length <= 1) {
+                  alert(t("pages.deleteLast"));
+                  return;
+                }
+                if (confirm(t("pages.deleteConfirm", { title: page.title }))) {
+                  setData(deletePage(data, page.id));
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </IconButton>
           </div>
         ))}
       </div>

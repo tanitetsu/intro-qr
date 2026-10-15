@@ -1,4 +1,4 @@
-import { PenLine, QrCode, Settings, UserRoundSearch } from "lucide-react";
+import { PenLine, QrCode, Settings, Users } from "lucide-react";
 
 /** QRコードを見せるタブ — Lucide qr-code */
 export function QrTabIcon({ className }: { className?: string }) {
@@ -10,10 +10,13 @@ export function EditTabIcon({ className }: { className?: string }) {
   return <PenLine className={className} strokeWidth={1.75} aria-hidden />;
 }
 
-/** 保存した人のアルバム — Lucide user-round-search */
-export function AlbumTabIcon({ className }: { className?: string }) {
-  return <UserRoundSearch className={className} strokeWidth={1.75} aria-hidden />;
+/** 受け取った相手一覧 — Lucide users */
+export function PeopleTabIcon({ className }: { className?: string }) {
+  return <Users className={className} strokeWidth={1.75} aria-hidden />;
 }
+
+/** @deprecated PeopleTabIcon を使う */
+export const AlbumTabIcon = PeopleTabIcon;
 
 /** マイページ／設定 — Lucide settings */
 export function ProfileTabIcon({ className }: { className?: string }) {

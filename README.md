@@ -72,5 +72,5 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 ## 次の予定
 
 1. GitHub × Vercel で本番URL固定
-2. ~~位置情報の任意自動提案~~（アルバム保存時・詳細の「現在地から入力」）
+2. ~~位置情報の任意自動提案~~（相手保存時・詳細の現在地入力）
 3. 後から Expo でアプリ化

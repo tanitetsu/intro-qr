@@ -1,20 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { Camera, StickyNote, Trash2, Users } from "lucide-react";
 import { useState } from "react";
+import { IconButton, IconLink } from "@/components/ui/IconButton";
 import { useAppData } from "@/lib/app-data";
 import { formatDate } from "@/lib/dates";
 import { useI18n } from "@/lib/i18n/locale";
 import { deleteSavedPerson } from "@/lib/storage";
 import type { SavedPerson } from "@/lib/types";
-
-function chipButtonClass(enabled: boolean) {
-  return `rounded-full px-2.5 py-1 text-[11px] font-medium leading-none ${
-    enabled
-      ? "bg-violet-50 text-violet-700"
-      : "bg-zinc-100 text-zinc-400"
-  }`;
-}
 
 export function SavedListClient() {
   const { ready, savedPeople, data, setData } = useAppData();
@@ -28,10 +22,17 @@ export function SavedListClient() {
 
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-bold">{t("album.title")}</h1>
+      <h1 className="sr-only">{t("people.title")}</h1>
 
       {savedPeople.length === 0 ? (
-        <p className="text-sm text-zinc-600">{t("album.empty")}</p>
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 px-6 text-center">
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+            <Users className="h-10 w-10" strokeWidth={1.75} aria-hidden />
+          </div>
+          <p className="max-w-xs text-sm leading-6 text-zinc-600">
+            {t("people.empty")}
+          </p>
+        </div>
       ) : (
         <div className="space-y-2">
           {savedPeople.map((person) => {
@@ -45,11 +46,11 @@ export function SavedListClient() {
             return (
               <div
                 key={person.id}
-                className="flex items-center gap-2 rounded-2xl border border-black/8 bg-white px-3 py-2.5 shadow-sm"
+                className="flex items-center gap-1 rounded-2xl border border-black/8 bg-white px-2 py-2 shadow-sm"
               >
                 <Link
                   href={`/u/${person.sourcePageId}`}
-                  className="min-w-0 flex-1 rounded-lg py-0.5 active:bg-zinc-50"
+                  className="min-w-0 flex-1 rounded-lg px-2 py-1.5 active:bg-zinc-50"
                 >
                   <p className="truncate text-sm font-semibold text-violet-800 underline-offset-2 hover:underline">
                     {person.customName}
@@ -61,43 +62,48 @@ export function SavedListClient() {
                   ) : null}
                 </Link>
 
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex shrink-0 items-center">
                   {person.facePhotoDataUrl ? (
-                    <button
-                      type="button"
+                    <IconButton
+                      label={t("common.photo")}
+                      tone="soft"
                       onClick={() =>
                         setPhotoPreview(person.facePhotoDataUrl ?? null)
                       }
-                      className={chipButtonClass(true)}
                     >
-                      {t("common.photo")}
-                    </button>
+                      <Camera className="h-5 w-5" strokeWidth={2} aria-hidden />
+                    </IconButton>
                   ) : (
-                    <Link
+                    <IconLink
                       href={`/saved/${person.id}`}
-                      className={chipButtonClass(false)}
+                      label={t("common.photo")}
+                      tone="ghost"
                     >
-                      {t("common.photo")}
-                    </Link>
+                      <Camera className="h-5 w-5" strokeWidth={2} aria-hidden />
+                    </IconLink>
                   )}
-                  <button
-                    type="button"
+                  <IconButton
+                    label={t("people.note")}
+                    tone={person.note.trim() ? "soft" : "ghost"}
                     onClick={() => setMemoPreview(person)}
-                    className={chipButtonClass(!!person.note.trim())}
                   >
-                    {t("album.note")}
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-full border border-red-200 px-2 py-1 text-[11px] font-medium leading-none text-red-600"
+                    <StickyNote
+                      className="h-5 w-5"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                  </IconButton>
+                  <IconButton
+                    label={t("common.delete")}
+                    tone="danger"
                     onClick={() => {
-                      if (confirm(t("album.deleteConfirm"))) {
+                      if (confirm(t("people.deleteConfirm"))) {
                         setData(deleteSavedPerson(data, person.id));
                       }
                     }}
                   >
-                    {t("common.delete")}
-                  </button>
+                    <Trash2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  </IconButton>
                 </div>
               </div>
             );
@@ -128,32 +134,26 @@ export function SavedListClient() {
         >
           <div
             role="dialog"
-            aria-labelledby="album-memo-title"
+            aria-labelledby="people-memo-title"
             className="w-full max-w-sm rounded-2xl bg-white p-4 shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
             <h2
-              id="album-memo-title"
-              className="text-sm font-semibold text-zinc-900"
+              id="people-memo-title"
+              className="flex items-center gap-2 text-sm font-semibold text-zinc-900"
             >
-              {memoPreview.customName} — {t("album.note")}
+              <StickyNote className="h-4 w-4" aria-hidden />
+              {memoPreview.customName}
             </h2>
             <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-700">
               {memoPreview.note.trim()
                 ? memoPreview.note
-                : t("album.memoEmpty")}
+                : t("people.memoEmpty")}
             </p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                className="rounded-xl px-3 py-2 text-xs font-medium text-zinc-600"
-                onClick={() => setMemoPreview(null)}
-              >
-                {t("public.photoCancel")}
-              </button>
+            <div className="mt-4 flex justify-end">
               <Link
                 href={`/saved/${memoPreview.id}`}
-                className="rounded-xl bg-zinc-900 px-3 py-2 text-xs font-medium text-white"
+                className="inline-flex h-11 items-center justify-center rounded-full bg-violet-600 px-4 text-xs font-medium text-white"
                 onClick={() => setMemoPreview(null)}
               >
                 {t("common.edit")}
