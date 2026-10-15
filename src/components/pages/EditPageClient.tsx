@@ -6,6 +6,7 @@ import { useAppData } from "@/lib/app-data";
 import { useI18n } from "@/lib/i18n/locale";
 import {
   addLinkToPage,
+  applyCloudIdToPage,
   getPageById,
   removeLinkFromPage,
   upsertPage,
@@ -91,32 +92,43 @@ export function EditPageClient({ pageId }: { pageId: string }) {
       const current = dataRef.current;
       const latest = getPageById(current, targetPageId);
       if (!latest) return;
-      const result = await syncPageToCloud(current, latest);
+      const result = await syncPageToCloud(latest);
       if (result.error === "not_logged_in") {
         setSyncHint(tRef.current("pages.syncLogin"));
         return;
       }
       if (result.error) return;
-      setData(result.data);
+      if (result.sync) {
+        const { localPageId, cloudId } = result.sync;
+        setData((prev) => {
+          const next = applyCloudIdToPage(prev, localPageId, cloudId);
+          dataRef.current = next;
+          return next;
+        });
+      }
       setSyncHint(tRef.current("pages.syncOk"));
     }, SYNC_DEBOUNCE_MS);
   }
 
-  function commit(next: AppData) {
-    dataRef.current = next;
-    setData(next);
+  function commit(updater: (prev: AppData) => AppData) {
+    setData((prev) => {
+      const next = updater(prev);
+      dataRef.current = next;
+      return next;
+    });
     scheduleCloudSync(pageId);
   }
 
   function patchPage(patch: Partial<ProfilePage>) {
-    if (!page) return;
-    commit(
-      upsertPage(data, {
-        ...page,
+    commit((prev) => {
+      const current = getPageById(prev, pageId);
+      if (!current) return prev;
+      return upsertPage(prev, {
+        ...current,
         ...patch,
         updatedAt: new Date().toISOString(),
-      }),
-    );
+      });
+    });
   }
 
   if (!ready) {
@@ -206,14 +218,15 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                 disabled={iconBusy}
                 className="rounded-xl px-3 py-2 text-sm font-medium text-red-600 disabled:opacity-50"
                 onClick={() => {
-                  if (!page) return;
-                  const { iconDataUrl: _removed, ...rest } = page;
-                  commit(
-                    upsertPage(data, {
+                  commit((prev) => {
+                    const current = getPageById(prev, pageId);
+                    if (!current) return prev;
+                    const { iconDataUrl: _removed, ...rest } = current;
+                    return upsertPage(prev, {
                       ...rest,
                       updatedAt: new Date().toISOString(),
-                    }),
-                  );
+                    });
+                  });
                 }}
               >
                 {t("edit.iconRemove")}
@@ -298,8 +311,8 @@ export function EditPageClient({ pageId }: { pageId: string }) {
               alert(t("edit.urlRequired"));
               return;
             }
-            commit(
-              addLinkToPage(data, page.id, {
+            commit((prev) =>
+              addLinkToPage(prev, pageId, {
                 title:
                   resolvedTitle?.trim() ||
                   guessTitleFromUrl(trimmedUrl, defaultLinkTitle),
@@ -360,7 +373,9 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                       type="button"
                       className="shrink-0 text-xs font-medium text-red-600"
                       onClick={() =>
-                        commit(removeLinkFromPage(data, page.id, link.id))
+                        commit((prev) =>
+                          removeLinkFromPage(prev, pageId, link.id),
+                        )
                       }
                     >
                       {t("common.delete")}

@@ -64,6 +64,28 @@ export function setActivePageId(data: AppData, pageId: string): AppData {
   return next;
 }
 
+/** クラウド同期後は cloudId だけ付与し、編集中のローカル内容は上書きしない */
+export function applyCloudIdToPage(
+  data: AppData,
+  localPageId: string,
+  cloudId: string,
+): AppData {
+  const page = data.pages.find((p) => p.id === localPageId);
+  if (!page || page.cloudId === cloudId) return data;
+  return upsertPage(data, { ...page, cloudId });
+}
+
+export function applyCloudIdsToPages(
+  data: AppData,
+  syncs: { localPageId: string; cloudId: string }[],
+): AppData {
+  let next = data;
+  for (const { localPageId, cloudId } of syncs) {
+    next = applyCloudIdToPage(next, localPageId, cloudId);
+  }
+  return next;
+}
+
 export function upsertPage(data: AppData, page: ProfilePage): AppData {
   const exists = data.pages.some((p) => p.id === page.id);
   const pages = exists
