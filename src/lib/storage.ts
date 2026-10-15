@@ -254,9 +254,18 @@ export function updateSavedPerson(
 ): AppData {
   const next = {
     ...data,
-    savedPeople: data.savedPeople.map((p) =>
-      p.id === savedId ? { ...p, ...patch } : p,
-    ),
+    savedPeople: data.savedPeople.map((p) => {
+      if (p.id !== savedId) return p;
+      const merged = { ...p, ...patch };
+      if (patch.snapshot) {
+        merged.snapshot = {
+          ...p.snapshot,
+          ...patch.snapshot,
+          links: p.snapshot.links,
+        };
+      }
+      return merged;
+    }),
   };
   saveAppData(next);
   return next;
