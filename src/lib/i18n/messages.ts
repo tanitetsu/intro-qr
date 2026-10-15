@@ -88,6 +88,12 @@ const ja = {
   "auth.languageEn": "English",
 
   "qr.tooLong": "QRを表示できません。ページを編集してください。",
+  "qr.preparing": "短い共有リンクを準備中…",
+  "qr.loginForShort": "ログインして短いQRにする",
+  "qr.needShortShareConfig":
+    "短い共有リンク用の設定がありません。ログインするか、リンク数を減らしてください。",
+  "qr.shortShareFailed":
+    "短い共有リンクの作成に失敗しました。ログインするか、リンク数を減らしてください。",
   "qr.copied": "リンクをコピーしました",
   "qr.manualCopy": "下のURLを長押ししてコピーしてください",
 
@@ -210,6 +216,12 @@ const en: Record<MessageKey, string> = {
   "auth.languageEn": "English",
 
   "qr.tooLong": "Can’t show this QR. Edit the page.",
+  "qr.preparing": "Preparing a short share link…",
+  "qr.loginForShort": "Sign in for a short QR",
+  "qr.needShortShareConfig":
+    "Short-link sharing isn’t configured. Sign in or remove some links.",
+  "qr.shortShareFailed":
+    "Couldn’t create a short link. Sign in or remove some links.",
   "qr.copied": "Link copied",
   "qr.manualCopy": "Long-press the URL below to copy",
 

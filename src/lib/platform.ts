@@ -1,0 +1,546 @@
+export type PlatformId =
+  | "x"
+  | "instagram"
+  | "facebook"
+  | "tiktok"
+  | "threads"
+  | "linkedin"
+  | "youtube"
+  | "pinterest"
+  | "reddit"
+  | "tumblr"
+  | "mastodon"
+  | "bluesky"
+  | "weibo"
+  | "douyin"
+  | "xiaohongshu"
+  | "bilibili"
+  | "vk"
+  | "pixiv"
+  | "lemon8"
+  | "spotify"
+  | "apple_music"
+  | "apple_podcasts"
+  | "twitch"
+  | "kick"
+  | "vimeo"
+  | "dailymotion"
+  | "niconico"
+  | "soundcloud"
+  | "bandcamp"
+  | "mixcloud"
+  | "note"
+  | "medium"
+  | "substack"
+  | "ghost"
+  | "wordpress"
+  | "github"
+  | "gitlab"
+  | "notion"
+  | "linktree"
+  | "behance"
+  | "dribbble"
+  | "artstation"
+  | "patreon"
+  | "ko_fi"
+  | "bmc"
+  | "gumroad"
+  | "etsy"
+  | "shopify"
+  | "paypal"
+  | "calendly"
+  | "calcom"
+  | "zoom"
+  | "google_maps"
+  | "steam"
+  | "roblox"
+  | "epic"
+  | "ameba"
+  | "line"
+  | "discord"
+  | "other";
+
+export type PlatformInfo = {
+  id: PlatformId;
+  label: string;
+  /** Tailwind-ish brand color for icon chip */
+  color: string;
+};
+
+type Rule = {
+  id: PlatformId;
+  label: string;
+  color: string;
+  match: (host: string, path: string) => boolean;
+};
+
+const RULES: Rule[] = [
+  {
+    id: "x",
+    label: "X",
+    color: "#000000",
+    match: (h) =>
+      h === "x.com" || h === "twitter.com" || h.endsWith(".x.com"),
+  },
+  {
+    id: "instagram",
+    label: "Instagram",
+    color: "#E4405F",
+    match: (h) => h === "instagram.com" || h.endsWith(".instagram.com"),
+  },
+  {
+    id: "facebook",
+    label: "Facebook",
+    color: "#1877F2",
+    match: (h) => h === "facebook.com" || h.endsWith(".facebook.com"),
+  },
+  {
+    id: "tiktok",
+    label: "TikTok",
+    color: "#010101",
+    match: (h) => h === "tiktok.com" || h.endsWith(".tiktok.com"),
+  },
+  {
+    id: "threads",
+    label: "Threads",
+    color: "#000000",
+    match: (h) => h === "threads.net" || h.endsWith(".threads.net"),
+  },
+  {
+    id: "linkedin",
+    label: "LinkedIn",
+    color: "#0A66C2",
+    match: (h) => h === "linkedin.com" || h.endsWith(".linkedin.com"),
+  },
+  {
+    id: "youtube",
+    label: "YouTube",
+    color: "#FF0000",
+    match: (h) =>
+      h === "youtube.com" ||
+      h === "youtu.be" ||
+      h === "music.youtube.com" ||
+      h.endsWith(".youtube.com"),
+  },
+  {
+    id: "pinterest",
+    label: "Pinterest",
+    color: "#E60023",
+    match: (h) => h === "pinterest.com" || h.endsWith(".pinterest.com"),
+  },
+  {
+    id: "reddit",
+    label: "Reddit",
+    color: "#FF4500",
+    match: (h) => h === "reddit.com" || h.endsWith(".reddit.com"),
+  },
+  {
+    id: "tumblr",
+    label: "Tumblr",
+    color: "#001935",
+    match: (h) => h === "tumblr.com" || h.endsWith(".tumblr.com"),
+  },
+  {
+    id: "mastodon",
+    label: "Mastodon",
+    color: "#6364FF",
+    match: (h) => h.includes("mastodon") || h.endsWith(".social"),
+  },
+  {
+    id: "bluesky",
+    label: "Bluesky",
+    color: "#1185FE",
+    match: (h) => h === "bsky.app" || h.endsWith(".bsky.social"),
+  },
+  {
+    id: "weibo",
+    label: "Weibo",
+    color: "#E6162D",
+    match: (h) => h === "weibo.com" || h.endsWith(".weibo.com"),
+  },
+  {
+    id: "douyin",
+    label: "Douyin",
+    color: "#000000",
+    match: (h) => h === "douyin.com" || h.endsWith(".douyin.com"),
+  },
+  {
+    id: "xiaohongshu",
+    label: "小红书",
+    color: "#FF2442",
+    match: (h) =>
+      h === "xiaohongshu.com" || h.endsWith(".xiaohongshu.com"),
+  },
+  {
+    id: "bilibili",
+    label: "Bilibili",
+    color: "#00A1D6",
+    match: (h) => h === "bilibili.com" || h.endsWith(".bilibili.com"),
+  },
+  {
+    id: "vk",
+    label: "VK",
+    color: "#0077FF",
+    match: (h) => h === "vk.com" || h.endsWith(".vk.com"),
+  },
+  {
+    id: "pixiv",
+    label: "pixiv",
+    color: "#0096FA",
+    match: (h) => h === "pixiv.net" || h.endsWith(".pixiv.net"),
+  },
+  {
+    id: "lemon8",
+    label: "Lemon8",
+    color: "#FEE600",
+    match: (h) => h.includes("lemon8"),
+  },
+  {
+    id: "spotify",
+    label: "Spotify",
+    color: "#1DB954",
+    match: (h) => h === "open.spotify.com" || h === "spotify.com",
+  },
+  {
+    id: "apple_music",
+    label: "Apple Music",
+    color: "#FC3C44",
+    match: (h) => h === "music.apple.com",
+  },
+  {
+    id: "apple_podcasts",
+    label: "Apple Podcasts",
+    color: "#9933FF",
+    match: (h) => h === "podcasts.apple.com",
+  },
+  {
+    id: "twitch",
+    label: "Twitch",
+    color: "#9146FF",
+    match: (h) => h === "twitch.tv" || h.endsWith(".twitch.tv"),
+  },
+  {
+    id: "kick",
+    label: "Kick",
+    color: "#53FC18",
+    match: (h) => h === "kick.com",
+  },
+  {
+    id: "vimeo",
+    label: "Vimeo",
+    color: "#1AB7EA",
+    match: (h) => h === "vimeo.com",
+  },
+  {
+    id: "dailymotion",
+    label: "Dailymotion",
+    color: "#00AFFF",
+    match: (h) => h === "dailymotion.com",
+  },
+  {
+    id: "niconico",
+    label: "ニコニコ",
+    color: "#252525",
+    match: (h) => h.includes("nicovideo"),
+  },
+  {
+    id: "soundcloud",
+    label: "SoundCloud",
+    color: "#FF5500",
+    match: (h) => h === "soundcloud.com",
+  },
+  {
+    id: "bandcamp",
+    label: "Bandcamp",
+    color: "#1DA0C3",
+    match: (h) => h === "bandcamp.com" || h.endsWith(".bandcamp.com"),
+  },
+  {
+    id: "mixcloud",
+    label: "Mixcloud",
+    color: "#5000FF",
+    match: (h) => h === "mixcloud.com",
+  },
+  {
+    id: "note",
+    label: "note",
+    color: "#41C9B4",
+    match: (h) => h === "note.com",
+  },
+  {
+    id: "medium",
+    label: "Medium",
+    color: "#000000",
+    match: (h) => h === "medium.com" || h.endsWith(".medium.com"),
+  },
+  {
+    id: "substack",
+    label: "Substack",
+    color: "#FF6719",
+    match: (h) => h === "substack.com" || h.endsWith(".substack.com"),
+  },
+  {
+    id: "ghost",
+    label: "Ghost",
+    color: "#15171A",
+    match: (h) => h.includes("ghost"),
+  },
+  {
+    id: "wordpress",
+    label: "WordPress",
+    color: "#21759B",
+    match: (h) => h.includes("wordpress") || h.endsWith(".wp.com"),
+  },
+  {
+    id: "github",
+    label: "GitHub",
+    color: "#181717",
+    match: (h) => h === "github.com",
+  },
+  {
+    id: "gitlab",
+    label: "GitLab",
+    color: "#FC6D26",
+    match: (h) => h === "gitlab.com",
+  },
+  {
+    id: "notion",
+    label: "Notion",
+    color: "#000000",
+    match: (h) => h.includes("notion"),
+  },
+  {
+    id: "linktree",
+    label: "Linktree",
+    color: "#43E55E",
+    match: (h) => h === "linktr.ee",
+  },
+  {
+    id: "behance",
+    label: "Behance",
+    color: "#1769FF",
+    match: (h) => h === "behance.net",
+  },
+  {
+    id: "dribbble",
+    label: "Dribbble",
+    color: "#EA4C89",
+    match: (h) => h === "dribbble.com",
+  },
+  {
+    id: "artstation",
+    label: "ArtStation",
+    color: "#13AFF0",
+    match: (h) => h === "artstation.com",
+  },
+  {
+    id: "patreon",
+    label: "Patreon",
+    color: "#FF424D",
+    match: (h) => h === "patreon.com",
+  },
+  {
+    id: "ko_fi",
+    label: "Ko-fi",
+    color: "#FF5E5B",
+    match: (h) => h === "ko-fi.com",
+  },
+  {
+    id: "bmc",
+    label: "Buy Me a Coffee",
+    color: "#FFDD00",
+    match: (h) => h === "buymeacoffee.com",
+  },
+  {
+    id: "gumroad",
+    label: "Gumroad",
+    color: "#FF90E8",
+    match: (h) => h === "gumroad.com",
+  },
+  {
+    id: "etsy",
+    label: "Etsy",
+    color: "#F16521",
+    match: (h) => h === "etsy.com",
+  },
+  {
+    id: "shopify",
+    label: "Shopify",
+    color: "#96BF48",
+    match: (h) => h.includes("shopify") || h.endsWith(".myshopify.com"),
+  },
+  {
+    id: "paypal",
+    label: "PayPal",
+    color: "#003087",
+    match: (h) => h.includes("paypal"),
+  },
+  {
+    id: "calendly",
+    label: "Calendly",
+    color: "#006BFF",
+    match: (h) => h === "calendly.com",
+  },
+  {
+    id: "calcom",
+    label: "Cal.com",
+    color: "#111827",
+    match: (h) => h === "cal.com",
+  },
+  {
+    id: "zoom",
+    label: "Zoom",
+    color: "#2D8CFF",
+    match: (h) => h.includes("zoom."),
+  },
+  {
+    id: "google_maps",
+    label: "Google Maps",
+    color: "#34A853",
+    match: (h, path) =>
+      h.includes("google.") && (path.includes("/maps") || h.includes("maps")),
+  },
+  {
+    id: "steam",
+    label: "Steam",
+    color: "#171A21",
+    match: (h) => h.includes("steampowered") || h === "store.steampowered.com",
+  },
+  {
+    id: "roblox",
+    label: "Roblox",
+    color: "#E2231A",
+    match: (h) => h === "roblox.com",
+  },
+  {
+    id: "epic",
+    label: "Epic Games",
+    color: "#313131",
+    match: (h) => h.includes("epicgames"),
+  },
+  {
+    id: "ameba",
+    label: "Ameba",
+    color: "#2DCC70",
+    match: (h) => h === "ameblo.jp" || h.includes("ameba"),
+  },
+  {
+    id: "line",
+    label: "LINE",
+    color: "#06C755",
+    match: (h) =>
+      h === "line.me" || h.endsWith(".line.me") || h === "lin.ee",
+  },
+  {
+    id: "discord",
+    label: "Discord",
+    color: "#5865F2",
+    match: (h) => h === "discord.com" || h === "discord.gg",
+  },
+];
+
+export function detectPlatform(url: string): PlatformInfo {
+  try {
+    const parsed = new URL(url.trim());
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    const path = parsed.pathname.toLowerCase();
+    const hit = RULES.find((r) => r.match(host, path));
+    if (hit) return { id: hit.id, label: hit.label, color: hit.color };
+  } catch {
+    // ignore
+  }
+  return { id: "other", label: "Link", color: "#71717A" };
+}
+
+/** OGタイトルからPF名やサイト名の接尾辞を落としてコンテンツ名寄りにする */
+export function cleanContentTitle(
+  raw: string | undefined | null,
+  platformLabel?: string,
+): string | undefined {
+  if (!raw?.trim()) return undefined;
+  let title = raw
+    .replace(/\s+/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&#064;/g, "@")
+    .replace(/&#xb7;/gi, "·")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
+
+  const suffixes = [
+    "on Apple Music",
+    "on Spotify",
+    "on Apple Podcasts",
+    "on SoundCloud",
+    "on Bandcamp",
+    platformLabel,
+    "YouTube",
+    "Spotify",
+    "Apple Music",
+    "Apple Podcasts",
+    "GitHub",
+    "LinkedIn",
+    "Instagram",
+    "TikTok",
+    "note",
+    "SoundCloud",
+    "Bandcamp",
+    "Twitch",
+    "Steam",
+    "Roblox",
+  ].filter(Boolean) as string[];
+
+  // 長い接尾辞を先に（"on Apple Music" が "Apple Music" より先）
+  suffixes.sort((a, b) => b.length - a.length);
+
+  for (const s of suffixes) {
+    const escaped = s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    title = title
+      .replace(new RegExp(`\\s*[|·\\-–—]\\s*${escaped}\\s*$`, "i"), "")
+      .replace(new RegExp(`\\s+${escaped}\\s*$`, "i"), "")
+      .trim();
+  }
+
+  // 「GitHub - repo: desc」→ 「repo: desc」
+  if (platformLabel && /^GitHub$/i.test(platformLabel)) {
+    title = title.replace(/^GitHub\s*[-–—:]\s*/i, "").trim();
+  }
+
+  // 「タイトル | サイト」の最後の | 以降が短いブランドなら落とす
+  const pipe = title.lastIndexOf("|");
+  if (pipe > 0) {
+    const right = title.slice(pipe + 1).trim();
+    if (right.length > 0 && right.length <= 24) {
+      title = title.slice(0, pipe).trim();
+    }
+  }
+
+  // 末尾の孤立した "on" / "by" を除去
+  title = title.replace(/\s+(on|by)\s*$/i, "").trim();
+
+  return title || undefined;
+}
+
+export function isLikelyHomepageUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url.trim());
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    if (parts.length === 0) return true;
+    const homeish = new Set([
+      "explore",
+      "discover",
+      "home",
+      "feed",
+      "blog",
+      "news",
+      "about",
+      "login",
+      "signup",
+    ]);
+    return parts.length === 1 && homeish.has(parts[0].toLowerCase());
+  } catch {
+    return false;
+  }
+}

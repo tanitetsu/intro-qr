@@ -70,6 +70,11 @@ git push -u github cursor/intro-qr-web-mvp:main
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://rzomrytqcooatyhugpcc.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `sb_publishable_XB42UdX9zwM3hdDDaJwqJw_SyQ8W12O` |
+| `SHARE_BOT_EMAIL`（任意） | 短いQR用ボットのメール（未ログインでも `/u/{uuid}` を発行） |
+| `SHARE_BOT_PASSWORD`（任意） | 同上パスワード |
+
+リンクが多いページを `/s/{巨大トークン}` に載せるとURLが無効・QRが細かすぎて読めなくなります。  
+ログイン同期（`/u/{uuid}`）か `SHARE_BOT_*` による短い共有を使います。
 
 7. **Deploy**
 
