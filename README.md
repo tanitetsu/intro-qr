@@ -53,7 +53,8 @@ Cursor の Environment 保存画面で提案中の設定を確認して保存し
 一時トンネル（trycloudflare / loca.lt）は本番利用禁止です。
 
 手順: [`docs/GITHUB_VERCEL_SETUP.md`](docs/GITHUB_VERCEL_SETUP.md)  
-運用ルール（Git・デプロイ）: [`docs/git-workflow.md`](docs/git-workflow.md)
+運用ルール（Git・デプロイ）: [`docs/git-workflow.md`](docs/git-workflow.md)  
+UI 設計（全世界・ピクトグラム優先）: [`docs/design-global-ui.md`](docs/design-global-ui.md)
 
 必要な環境変数:
 
