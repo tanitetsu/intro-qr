@@ -1,9 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ProfileLink } from "@/lib/types";
-import { displayThumbnailUrl } from "@/lib/link-meta";
-import { cleanContentTitle, detectPlatform } from "@/lib/platform";
+import {
+  displayLinkComment,
+  displayLinkTitle,
+  displayThumbnailUrl,
+  fetchLinkMeta,
+  isPlatformishTitle,
+  shouldRefreshLinkTitle,
+} from "@/lib/link-meta";
+import { detectPlatform } from "@/lib/platform";
 import { PlatformIcon } from "@/components/links/PlatformIcon";
 
 export function LinkCard({
@@ -15,11 +22,25 @@ export function LinkCard({
 }) {
   const thumbnailUrl = !compact ? displayThumbnailUrl(link) : undefined;
   const [thumbBroken, setThumbBroken] = useState(false);
+  const [liveTitle, setLiveTitle] = useState<string | undefined>();
   const platform = detectPlatform(link.url);
-  const title =
-    cleanContentTitle(link.title, platform.label) ||
-    link.title ||
-    platform.label;
+  const storedTitle = displayLinkTitle(link);
+  const title = liveTitle || storedTitle;
+  const comment = displayLinkComment(link);
+
+  useEffect(() => {
+    setLiveTitle(undefined);
+    if (!shouldRefreshLinkTitle(link)) return;
+    let cancelled = false;
+    void fetchLinkMeta(link.url).then((meta) => {
+      if (cancelled || !meta.title) return;
+      if (isPlatformishTitle(meta.title, platform.label, platform.id)) return;
+      setLiveTitle(meta.title);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [link, platform.id, platform.label]);
 
   return (
     <a
@@ -50,8 +71,8 @@ export function LinkCard({
           <p className="text-base font-semibold leading-snug text-zinc-900">
             {title}
           </p>
-          {link.comment ? (
-            <p className="text-sm leading-5 text-zinc-600">{link.comment}</p>
+          {comment ? (
+            <p className="text-sm leading-5 text-zinc-600">{comment}</p>
           ) : null}
         </div>
       </div>
