@@ -186,10 +186,29 @@ export function removeLinkFromPage(
   });
 }
 
+/** 配列順が並びの正本（編集モードのドラッグで更新） */
 export function getSavedPeopleSorted(data: AppData): SavedPerson[] {
-  return [...data.savedPeople].sort((a, b) =>
-    a.savedAt < b.savedAt ? 1 : -1,
-  );
+  return [...data.savedPeople];
+}
+
+/** 指定 ID 順に並べ替え（欠落 ID は末尾に残す） */
+export function reorderSavedPeople(
+  data: AppData,
+  orderedIds: string[],
+): AppData {
+  const map = new Map(data.savedPeople.map((p) => [p.id, p]));
+  const next: SavedPerson[] = [];
+  for (const id of orderedIds) {
+    const person = map.get(id);
+    if (person) {
+      next.push(person);
+      map.delete(id);
+    }
+  }
+  for (const person of map.values()) next.push(person);
+  const result = { ...data, savedPeople: next };
+  saveAppData(result);
+  return result;
 }
 
 export function findSavedBySourcePageId(
