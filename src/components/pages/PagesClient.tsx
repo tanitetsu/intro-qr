@@ -4,7 +4,12 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useAppData } from "@/lib/app-data";
 import { useI18n } from "@/lib/i18n/locale";
-import { createEmptyPage, deletePage, upsertPage } from "@/lib/storage";
+import {
+  applyCloudIdsToPages,
+  createEmptyPage,
+  deletePage,
+  upsertPage,
+} from "@/lib/storage";
 import { syncAllPagesToCloud } from "@/lib/supabase/auto-sync";
 
 export function PagesClient() {
@@ -21,7 +26,7 @@ export function PagesClient() {
       const result = await syncAllPagesToCloud(data);
       if (cancelled) return;
       if (result.synced > 0) {
-        setData(result.data);
+        setData((prev) => applyCloudIdsToPages(prev, result.syncs));
         setSyncHint(t("pages.syncOk"));
       } else if (result.error === "not_logged_in") {
         setSyncHint(t("pages.syncLogin"));

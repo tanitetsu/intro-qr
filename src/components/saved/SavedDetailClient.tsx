@@ -54,8 +54,8 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
       setLocationHint(t("album.locationFailed"));
       return;
     }
-    setData(
-      updateSavedPerson(data, person.id, {
+    setData((prev) =>
+      updateSavedPerson(prev, person.id, {
         metPlaceAuto: place,
         metPlaceManual: place,
       }),
@@ -95,8 +95,8 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
             className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
             value={person.customName}
             onChange={(e) =>
-              setData(
-                updateSavedPerson(data, person.id, {
+              setData((prev) =>
+                updateSavedPerson(prev, person.id, {
                   customName: e.target.value,
                 }),
               )
@@ -113,8 +113,8 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
               placeholder={t("album.placePlaceholder")}
               value={person.metPlaceManual}
               onChange={(e) =>
-                setData(
-                  updateSavedPerson(data, person.id, {
+                setData((prev) =>
+                  updateSavedPerson(prev, person.id, {
                     metPlaceManual: e.target.value,
                   }),
                 )
@@ -147,8 +147,8 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
             className="min-h-20 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm"
             value={person.note}
             onChange={(e) =>
-              setData(
-                updateSavedPerson(data, person.id, { note: e.target.value }),
+              setData((prev) =>
+                updateSavedPerson(prev, person.id, { note: e.target.value }),
               )
             }
           />
@@ -166,8 +166,8 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
               const file = e.target.files?.[0];
               if (!file) return;
               const dataUrl = await fileToDataUrl(file);
-              setData(
-                updateSavedPerson(data, person.id, {
+              setData((prev) =>
+                updateSavedPerson(prev, person.id, {
                   facePhotoDataUrl: dataUrl,
                 }),
               );
