@@ -153,15 +153,118 @@ export function guessTitleFromUrl(url: string, fallback = "Link"): string {
   }
 }
 
-/** 表示用: 保存タイトルから PF 名接尾辞を落としたコンテンツ名 */
+const CONTENT_KIND =
+  "track|album|playlist|artwork|art|video|post|reel|podcast|episode|song|music|link|page|profile|channel|ショー|動画|曲";
+
+/** PF名や「Spotify track」「pixiv artwork」など中身のないタイトルか */
+export function isPlatformishTitle(
+  raw: string | undefined | null,
+  platformLabel: string,
+  platformId: string,
+): boolean {
+  if (!raw?.trim()) return true;
+  const text = raw.trim();
+  const lower = text.toLowerCase();
+  const label = platformLabel.toLowerCase();
+  const idWords = platformId.replace(/_/g, " ").toLowerCase();
+  if (lower === label || lower === idWords) return true;
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (
+    new RegExp(`^${esc(label)}(\\s+(${CONTENT_KIND}))?$`, "i").test(text) ||
+    new RegExp(`^${esc(idWords)}(\\s+(${CONTENT_KIND}))?$`, "i").test(text)
+  ) {
+    return true;
+  }
+  // プレーヤー／ログイン壁の汎用タイトル
+  if (
+    /(ウェブプレーヤー|web\s*player|make your day|log\s*in|visitor system)/i.test(
+      text,
+    ) &&
+    (lower.includes(label.split(/\s+/)[0] || label) ||
+      lower.includes(idWords.split(/\s+/)[0] || idWords))
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** 調査用に付けた「Spotify · content」などのコメントか */
+export function isSurveyMetaComment(raw: string | undefined | null): boolean {
+  if (!raw?.trim()) return false;
+  return /[·|]\s*(content|playlist|profile|profile_fallback|home)\s*$/i.test(
+    raw.trim(),
+  );
+}
+
+/**
+ * 表示用コンテンツ名。
+ * 保存 title が PF 名寄りで comment に本名がある場合は comment を採用する。
+ */
 export function displayLinkTitle(
-  link: Pick<ProfileLink, "url" | "title">,
+  link: Pick<ProfileLink, "url" | "title" | "comment">,
 ): string {
   const platform = detectPlatform(link.url);
+  const cleanedTitle = cleanContentTitle(link.title, platform.label);
+  const cleanedComment = isSurveyMetaComment(link.comment)
+    ? undefined
+    : cleanContentTitle(link.comment, platform.label);
+
+  const titleBad =
+    !cleanedTitle ||
+    isPlatformishTitle(cleanedTitle, platform.label, platform.id) ||
+    isPlatformishTitle(link.title, platform.label, platform.id);
+  const commentGood =
+    !!cleanedComment &&
+    !isPlatformishTitle(cleanedComment, platform.label, platform.id);
+
+  if (!titleBad && cleanedTitle) return cleanedTitle;
+  if (commentGood && cleanedComment) return cleanedComment;
+
+  if (cleanedTitle && cleanedTitle.toLowerCase() !== platform.label.toLowerCase()) {
+    return cleanedTitle;
+  }
+
+  const guessed = guessTitleFromUrl(link.url, platform.label);
+  if (
+    guessed &&
+    !isPlatformishTitle(guessed, platform.label, platform.id) &&
+    guessed.toLowerCase() !== platform.label.toLowerCase()
+  ) {
+    return guessed;
+  }
+
+  return cleanedTitle || link.title?.trim() || platform.label;
+}
+
+/** ユーザーメモのみ。調査メタやタイトル重複は出さない */
+export function displayLinkComment(
+  link: Pick<ProfileLink, "url" | "title" | "comment">,
+): string | undefined {
+  const raw = link.comment?.trim();
+  if (!raw || isSurveyMetaComment(raw)) return undefined;
+  const platform = detectPlatform(link.url);
+  const title = displayLinkTitle(link);
+  const cleaned = cleanContentTitle(raw, platform.label) || raw;
+  if (cleaned === title || raw === title) return undefined;
+  if (isPlatformishTitle(cleaned, platform.label, platform.id)) return undefined;
+  // タイトル採用元が comment だった場合は字幕にしない
+  const titleFromComment =
+    isPlatformishTitle(link.title, platform.label, platform.id) &&
+    cleaned === (cleanContentTitle(link.comment, platform.label) || link.comment);
+  if (titleFromComment) return undefined;
+  return raw;
+}
+
+/** 保存タイトルが弱く、表示時に meta 再取得した方がよいか */
+export function shouldRefreshLinkTitle(
+  link: Pick<ProfileLink, "url" | "title" | "comment">,
+): boolean {
+  const platform = detectPlatform(link.url);
+  if (isSnsProfileUrl(link.url)) return false;
+  const shown = displayLinkTitle(link);
   return (
-    cleanContentTitle(link.title, platform.label) ||
-    link.title ||
-    platform.label
+    isPlatformishTitle(shown, platform.label, platform.id) ||
+    isPlatformishTitle(link.title, platform.label, platform.id)
   );
 }
 

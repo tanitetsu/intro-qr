@@ -13,13 +13,16 @@ import {
 } from "@/lib/storage";
 import {
   detectLinkType,
+  displayLinkComment,
   displayLinkTitle,
   fetchLinkMeta,
   getSnsLabel,
   guessTitleFromUrl,
+  isPlatformishTitle,
   isSnsProfileUrl,
   resolveLinkThumbnail,
 } from "@/lib/link-meta";
+import { detectPlatform } from "@/lib/platform";
 import { fileToIconDataUrl } from "@/lib/image";
 import { syncPageToCloud } from "@/lib/supabase/auto-sync";
 import type { AppData, ProfilePage } from "@/lib/types";
@@ -326,16 +329,28 @@ export function EditPageClient({ pageId }: { pageId: string }) {
               alert(t("edit.urlRequired"));
               return;
             }
-            const title =
+            const platform = detectPlatform(trimmedUrl);
+            let title =
               resolvedTitle?.trim() ||
               guessTitleFromUrl(trimmedUrl, defaultLinkTitle);
+            // PF名だけのタイトルは保存しない（コメント側にコンテンツ名があればそちらを採用）
+            const note = comment.trim();
+            if (
+              !isSnsProfileUrl(trimmedUrl) &&
+              isPlatformishTitle(title, platform.label, platform.id) &&
+              note &&
+              !isPlatformishTitle(note, platform.label, platform.id)
+            ) {
+              title = note;
+            }
             commit((prev) =>
               addLinkToPage(prev, pageId, {
                 title: isSnsProfileUrl(trimmedUrl)
                   ? getSnsLabel(trimmedUrl) || title
                   : title,
                 url: trimmedUrl,
-                comment: comment.trim() || undefined,
+                comment:
+                  note && note !== title ? note : undefined,
                 type: detectLinkType(trimmedUrl),
                 thumbnailUrl: isSnsProfileUrl(trimmedUrl)
                   ? undefined
@@ -367,6 +382,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                 ? undefined
                 : link.thumbnailUrl || resolveLinkThumbnail(link.url);
               const title = displayLinkTitle(link);
+              const note = displayLinkComment(link);
               return (
                 <div
                   key={link.id}
@@ -390,10 +406,8 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                         <p className="mt-0.5 truncate text-xs text-zinc-400">
                           {link.url}
                         </p>
-                        {link.comment ? (
-                          <p className="mt-1 text-xs text-zinc-500">
-                            {link.comment}
-                          </p>
+                        {note ? (
+                          <p className="mt-1 text-xs text-zinc-500">{note}</p>
                         ) : null}
                       </div>
                     </div>
