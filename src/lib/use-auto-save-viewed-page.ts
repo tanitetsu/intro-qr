@@ -19,11 +19,11 @@ export function useAutoSaveViewedPage(
   const { ready, data, setData } = useAppData();
   const done = useRef(false);
   const [justSaved, setJustSaved] = useState(false);
-  const flashTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const flashTimers = useRef<number[]>([]);
 
   useEffect(() => {
     return () => {
-      for (const timer of flashTimers.current) clearTimeout(timer);
+      for (const timer of flashTimers.current) window.clearTimeout(timer);
       flashTimers.current = [];
     };
   }, []);

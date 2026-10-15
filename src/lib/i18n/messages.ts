@@ -76,6 +76,8 @@ const ja = {
   "people.receivedLinks": "リンク",
   "people.memoEmpty": "メモなし",
   "people.saved": "相手に保存しました",
+  "people.done": "完了",
+  "people.reorder": "並び替え",
 
   "auth.title": "ログイン",
   "auth.missingConfig": "Supabase の環境変数が未設定です。",
@@ -206,6 +208,8 @@ const en: Record<MessageKey, string> = {
   "people.receivedLinks": "Links",
   "people.memoEmpty": "No note",
   "people.saved": "Saved to People",
+  "people.done": "Done",
+  "people.reorder": "Reorder",
 
   "auth.title": "Sign in",
   "auth.missingConfig": "Supabase environment variables are not set.",
