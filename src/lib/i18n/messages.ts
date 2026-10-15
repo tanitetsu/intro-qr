@@ -71,6 +71,7 @@ const ja = {
   "album.note": "メモ",
   "album.facePhoto": "顔写真（この端末内のみ）",
   "album.receivedLinks": "受け取ったリンク",
+  "album.memoEmpty": "メモはありません",
 
   "auth.title": "ログイン",
   "auth.missingConfig": "Supabase の環境変数が未設定です。",
@@ -192,6 +193,7 @@ const en: Record<MessageKey, string> = {
   "album.note": "Note",
   "album.facePhoto": "Face photo (this device only)",
   "album.receivedLinks": "Received links",
+  "album.memoEmpty": "No note yet",
 
   "auth.title": "Sign in",
   "auth.missingConfig": "Supabase environment variables are not set.",
