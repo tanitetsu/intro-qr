@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Plus, QrCode } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useAppData } from "@/lib/app-data";
 import { useI18n } from "@/lib/i18n/locale";
@@ -8,6 +9,7 @@ import { setActivePageId } from "@/lib/storage";
 import { resolveQrPath } from "@/lib/share-publish";
 import { PageCarousel } from "@/components/swipe/PageCarousel";
 import { QrCard } from "@/components/qr/QrCard";
+import { IconLink } from "@/components/ui/IconButton";
 import type { ProfilePage } from "@/lib/types";
 
 function QrForPage({
@@ -91,15 +93,15 @@ export function HomeClient() {
 
   if (!pages.length || !activePage) {
     return (
-      <div className="space-y-4 p-4">
-        <h1 className="text-xl font-bold">{t("home.emptyTitle")}</h1>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6 text-center">
+        <h1 className="sr-only">{t("home.emptyTitle")}</h1>
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-violet-50 text-violet-700">
+          <QrCode className="h-10 w-10" strokeWidth={1.75} aria-hidden />
+        </div>
         <p className="text-sm text-zinc-600">{t("home.emptyBody")}</p>
-        <Link
-          href="/pages"
-          className="inline-flex rounded-full bg-violet-600 px-4 py-2 text-sm font-medium text-white"
-        >
-          {t("home.createPage")}
-        </Link>
+        <IconLink href="/pages" label={t("home.createPage")} tone="primary">
+          <Plus className="h-5 w-5" strokeWidth={2.25} aria-hidden />
+        </IconLink>
       </div>
     );
   }

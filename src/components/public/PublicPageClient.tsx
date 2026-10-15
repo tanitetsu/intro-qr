@@ -8,6 +8,7 @@ import { getPageById } from "@/lib/storage";
 import { useAutoSaveViewedPage } from "@/lib/use-auto-save-viewed-page";
 import { ProfileView } from "@/components/links/ProfileView";
 import { FacePhotoButton } from "@/components/public/FacePhotoButton";
+import { SavedFeedback } from "@/components/public/SavedFeedback";
 
 export function PublicPageClient({ pageId }: { pageId: string }) {
   const { ready, data } = useAppData();
@@ -17,7 +18,7 @@ export function PublicPageClient({ pageId }: { pageId: string }) {
     [ready, data, pageId],
   );
 
-  useAutoSaveViewedPage(page);
+  const { justSaved } = useAutoSaveViewedPage(page);
 
   if (!ready) {
     return (
@@ -43,6 +44,7 @@ export function PublicPageClient({ pageId }: { pageId: string }) {
     <div className="mx-auto max-w-md px-4 py-6">
       <ProfileView page={page} />
       <FacePhotoButton page={page} />
+      <SavedFeedback visible={justSaved} />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
 import { useAutoSaveViewedPage } from "@/lib/use-auto-save-viewed-page";
 import { ProfileView } from "@/components/links/ProfileView";
 import { FacePhotoButton } from "@/components/public/FacePhotoButton";
+import { SavedFeedback } from "@/components/public/SavedFeedback";
 
 export function SharedPageClient({ token }: { token: string }) {
   const { ready, data } = useAppData();
@@ -28,7 +29,7 @@ export function SharedPageClient({ token }: { token: string }) {
     return data.pages.some((p) => encodeSharedPage(p) === token);
   }, [ready, data.pages, page, token]);
 
-  useAutoSaveViewedPage(page, { skip: isOwnShared });
+  const { justSaved } = useAutoSaveViewedPage(page, { skip: isOwnShared });
 
   if (!page) {
     return (
@@ -53,6 +54,7 @@ export function SharedPageClient({ token }: { token: string }) {
     <div className="mx-auto max-w-md px-4 py-6">
       <ProfileView page={page} />
       <FacePhotoButton page={page} hidden={isOwnShared} />
+      <SavedFeedback visible={justSaved} />
     </div>
   );
 }

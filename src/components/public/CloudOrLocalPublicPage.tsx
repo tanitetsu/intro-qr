@@ -10,6 +10,7 @@ import { fetchCloudPage } from "@/lib/supabase/pages";
 import { useAutoSaveViewedPage } from "@/lib/use-auto-save-viewed-page";
 import { ProfileView } from "@/components/links/ProfileView";
 import { FacePhotoButton } from "@/components/public/FacePhotoButton";
+import { SavedFeedback } from "@/components/public/SavedFeedback";
 import type { ProfilePage } from "@/lib/types";
 
 export function CloudOrLocalPublicPage({ pageId }: { pageId: string }) {
@@ -19,7 +20,7 @@ export function CloudOrLocalPublicPage({ pageId }: { pageId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useAutoSaveViewedPage(page);
+  const { justSaved } = useAutoSaveViewedPage(page);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +89,7 @@ export function CloudOrLocalPublicPage({ pageId }: { pageId: string }) {
     <div className="mx-auto max-w-md px-4 py-6">
       <ProfileView page={page} />
       <FacePhotoButton page={page} />
+      <SavedFeedback visible={justSaved} />
     </div>
   );
 }

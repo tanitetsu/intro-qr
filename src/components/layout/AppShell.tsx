@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { InAppBrowserBanner } from "@/components/layout/InAppBrowserBanner";
 import {
-  AlbumTabIcon,
   EditTabIcon,
+  PeopleTabIcon,
   ProfileTabIcon,
   QrTabIcon,
 } from "@/components/layout/TabIcons";
@@ -19,7 +19,7 @@ const navItems: {
 }[] = [
   { href: "/", labelKey: "nav.qr", Icon: QrTabIcon },
   { href: "/pages", labelKey: "nav.pages", Icon: EditTabIcon },
-  { href: "/saved", labelKey: "nav.album", Icon: AlbumTabIcon },
+  { href: "/saved", labelKey: "nav.people", Icon: PeopleTabIcon },
   { href: "/auth", labelKey: "nav.account", Icon: ProfileTabIcon },
 ];
 

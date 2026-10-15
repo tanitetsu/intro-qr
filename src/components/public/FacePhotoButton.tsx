@@ -1,7 +1,8 @@
 "use client";
 
-import { Camera } from "lucide-react";
+import { Camera, UserRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { StatusToast } from "@/components/ui/StatusToast";
 import { useAppData } from "@/lib/app-data";
 import { useI18n } from "@/lib/i18n/locale";
 import {
@@ -18,6 +19,18 @@ async function fileToDataUrl(file: File): Promise<string> {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+/** 相手の顔を撮る意味が伝わる合成ピクト（人物＋カメラ） */
+function FaceCaptureIcon({ className }: { className?: string }) {
+  return (
+    <span className={`relative inline-flex ${className ?? ""}`} aria-hidden>
+      <UserRound className="h-7 w-7" strokeWidth={2} />
+      <span className="absolute -bottom-0.5 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-violet-600 text-white ring-2 ring-white">
+        <Camera className="h-2.5 w-2.5" strokeWidth={2.5} />
+      </span>
+    </span>
+  );
 }
 
 export function FacePhotoButton({
@@ -79,19 +92,21 @@ export function FacePhotoButton({
             : "bg-white text-violet-700 ring-1 ring-violet-200"
         }`}
       >
-        <Camera className="h-6 w-6" strokeWidth={2.25} />
+        <FaceCaptureIcon
+          className={hasPhoto ? "text-white" : "text-violet-700"}
+        />
         {hasPhoto ? (
           <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-white" />
         ) : null}
       </button>
 
       {savedHint ? (
-        <p
-          role="status"
-          className="fixed bottom-40 right-[max(1rem,calc(50%-11rem))] z-30 rounded-full bg-zinc-900/90 px-3 py-1.5 text-xs font-medium text-white"
+        <StatusToast
+          icon={<Camera className="h-3.5 w-3.5" aria-hidden />}
+          className="!left-auto !right-[max(1rem,calc(50%-11rem))] !translate-x-0"
         >
           {t("public.photoSaved")}
-        </p>
+        </StatusToast>
       ) : null}
 
       <input
@@ -111,13 +126,16 @@ export function FacePhotoButton({
             aria-labelledby="face-photo-consent-title"
             className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-5 shadow-xl"
           >
+            <div className="flex justify-center text-violet-700">
+              <FaceCaptureIcon />
+            </div>
             <h2
               id="face-photo-consent-title"
-              className="text-base font-semibold text-zinc-900"
+              className="text-center text-base font-semibold text-zinc-900"
             >
               {t("public.photoConsentTitle")}
             </h2>
-            <p className="text-sm leading-6 text-zinc-600">
+            <p className="text-center text-sm leading-6 text-zinc-600">
               {t("public.photoConsentBody")}
             </p>
             <div className="flex gap-2">
@@ -132,7 +150,6 @@ export function FacePhotoButton({
                 type="button"
                 onClick={() => {
                   setConsentOpen(false);
-                  // ダイアログを閉じた直後にファイル選択を開く
                   window.setTimeout(() => inputRef.current?.click(), 0);
                 }}
                 className="flex-1 rounded-xl bg-violet-700 px-3 py-2.5 text-sm font-medium text-white"

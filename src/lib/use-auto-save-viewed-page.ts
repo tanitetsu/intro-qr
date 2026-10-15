@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppData } from "@/lib/app-data";
 import { suggestMeetingPlace } from "@/lib/geolocation";
 import { readStoredLocale } from "@/lib/i18n/locale";
@@ -15,9 +15,18 @@ import type { ProfilePage } from "@/lib/types";
 export function useAutoSaveViewedPage(
   page: ProfilePage | null,
   options?: { skip?: boolean },
-) {
+): { justSaved: boolean } {
   const { ready, data, setData } = useAppData();
   const done = useRef(false);
+  const [justSaved, setJustSaved] = useState(false);
+  const flashTimers = useRef<number[]>([]);
+
+  useEffect(() => {
+    return () => {
+      for (const timer of flashTimers.current) window.clearTimeout(timer);
+      flashTimers.current = [];
+    };
+  }, []);
 
   useEffect(() => {
     if (!ready || !page || done.current || options?.skip) return;
@@ -28,6 +37,14 @@ export function useAutoSaveViewedPage(
 
     const sourceId = page.cloudId || page.id;
     setData(savePersonFromPage(data, page));
+
+    // 自動保存の短いフィードバック（同期 setState を避け、アンマウント時のみクリア）
+    const showId = window.setTimeout(() => {
+      setJustSaved(true);
+      const hideId = window.setTimeout(() => setJustSaved(false), 2200);
+      flashTimers.current.push(hideId);
+    }, 0);
+    flashTimers.current.push(showId);
 
     // 位置情報は任意。拒否・失敗しても保存自体は完了済みのまま。
     void (async () => {
@@ -52,4 +69,6 @@ export function useAutoSaveViewedPage(
       });
     })();
   }, [ready, page, data, setData, options?.skip]);
+
+  return { justSaved };
 }
