@@ -199,7 +199,11 @@ const RULES: Rule[] = [
     id: "spotify",
     label: "Spotify",
     color: "#1DB954",
-    match: (h) => h === "open.spotify.com" || h === "spotify.com",
+    match: (h) =>
+      h === "open.spotify.com" ||
+      h === "spotify.com" ||
+      h === "creators.spotify.com" ||
+      h.endsWith(".spotify.com"),
   },
   {
     id: "apple_music",
@@ -471,12 +475,16 @@ export function cleanContentTitle(
 
   const suffixes = [
     "on Apple Music",
+    "on Spotify for Creators",
     "on Spotify",
     "on Apple Podcasts",
     "on SoundCloud",
     "on Bandcamp",
+    "on about.me",
+    "A podcast on Spotify for Creators",
     platformLabel,
     "YouTube",
+    "Spotify for Creators",
     "Spotify",
     "Apple Music",
     "Apple Podcasts",
@@ -490,6 +498,10 @@ export function cleanContentTitle(
     "Twitch",
     "Steam",
     "Roblox",
+    "bilibili",
+    "哔哩哔哩",
+    "about.me",
+    "pixiv",
   ].filter(Boolean) as string[];
 
   // 長い接尾辞を先に（"on Apple Music" が "Apple Music" より先）
@@ -497,11 +509,18 @@ export function cleanContentTitle(
 
   for (const s of suffixes) {
     const escaped = s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // ハイフンは文字クラス末尾に置き、範囲誤爆を防ぐ
     title = title
-      .replace(new RegExp(`\\s*[|·\\-–—]\\s*${escaped}\\s*$`, "i"), "")
+      .replace(new RegExp(`\\s*[|·•–—_-]\\s*${escaped}\\s*$`, "i"), "")
       .replace(new RegExp(`\\s+${escaped}\\s*$`, "i"), "")
       .trim();
   }
+  // 末尾の装飾記号だけ残ったら落とす
+  title = title.replace(/\s*[|·•–—_-]+\s*$/g, "").trim();
+
+  // bilibili 系の「タイトル_哔哩哔哩_bilibili」
+  title = title.replace(/_哔哩哔哩(_bilibili)?$/i, "").trim();
+  title = title.replace(/_bilibili$/i, "").trim();
 
   // 「GitHub - repo: desc」→ 「repo: desc」
   if (platformLabel && /^GitHub$/i.test(platformLabel)) {
@@ -517,10 +536,99 @@ export function cleanContentTitle(
     }
   }
 
+  // 「Name on about.me」など
+  title = title.replace(/\s+on\s+about\.me\s*$/i, "").trim();
+
   // 末尾の孤立した "on" / "by" を除去
   title = title.replace(/\s+(on|by)\s*$/i, "").trim();
 
   return title || undefined;
+}
+
+/** Apple Music / Spotify などのパスからコンテンツ名スラッグを推定 */
+export function contentSlugFromUrl(url: string): string | undefined {
+  try {
+    const parsed = new URL(url.trim());
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    const structural = new Set([
+      "album",
+      "playlist",
+      "song",
+      "track",
+      "artist",
+      "show",
+      "episode",
+      "video",
+      "videos",
+      "watch",
+      "shorts",
+      "status",
+      "post",
+      "posts",
+      "reel",
+      "reels",
+      "artworks",
+      "en",
+      "jp",
+      "us",
+      "uk",
+      "kr",
+      "cn",
+      "tw",
+      "www",
+      "sets",
+      "games",
+      "app",
+      "store",
+      "p",
+      "t",
+      "v",
+      "node",
+      "questions",
+      "gallery",
+      "shots",
+      "artwork",
+      "templates",
+      "l",
+      "pod",
+      "podcast",
+      "playlist",
+      "channel",
+      "user",
+      "users",
+    ]);
+    const isId = (s: string) =>
+      /^\d+$/.test(s) ||
+      /^pl\./i.test(s) ||
+      /^BV[\w]+$/i.test(s) ||
+      /^sm\d+$/i.test(s) ||
+      /^id\d+$/i.test(s) ||
+      /^RD[\w-]+$/i.test(s);
+
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const raw = parts[i];
+      if (!raw || structural.has(raw.toLowerCase()) || isId(raw)) continue;
+      // Apple: /album/{slug}/{id} → slug
+      if (
+        i + 1 < parts.length &&
+        isId(parts[i + 1]) &&
+        structural.has((parts[i - 1] || "").toLowerCase())
+      ) {
+        const decoded = decodeURIComponent(raw).replace(/[-_]+/g, " ").trim();
+        if (decoded.length > 1) return decoded;
+      }
+      const decoded = decodeURIComponent(raw).replace(/[-_]+/g, " ").trim();
+      if (
+        decoded.length > 1 &&
+        !/^(www|index|home|explore)$/i.test(decoded)
+      ) {
+        return decoded;
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return undefined;
 }
 
 export function isLikelyHomepageUrl(url: string): boolean {

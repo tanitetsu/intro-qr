@@ -7,6 +7,7 @@ import {
   displayLinkTitle,
   displayThumbnailUrl,
   fetchLinkMeta,
+  guessTitleFromUrl,
   isPlatformishTitle,
   shouldRefreshLinkTitle,
 } from "@/lib/link-meta";
@@ -22,25 +23,42 @@ export function LinkCard({
 }) {
   const thumbnailUrl = !compact ? displayThumbnailUrl(link) : undefined;
   const [thumbBroken, setThumbBroken] = useState(false);
-  const [liveTitle, setLiveTitle] = useState<string | undefined>();
+  const [live, setLive] = useState<{ url: string; title?: string }>({
+    url: link.url,
+  });
   const platform = detectPlatform(link.url);
   const storedTitle = displayLinkTitle(link);
+  const liveTitle = live.url === link.url ? live.title : undefined;
   const title = liveTitle || storedTitle;
   const comment = displayLinkComment(link);
 
   useEffect(() => {
-    setLiveTitle(undefined);
     if (!shouldRefreshLinkTitle(link)) return;
     let cancelled = false;
     void fetchLinkMeta(link.url).then((meta) => {
-      if (cancelled || !meta.title) return;
-      if (isPlatformishTitle(meta.title, platform.label, platform.id)) return;
-      setLiveTitle(meta.title);
+      if (cancelled) return;
+      const fromMeta =
+        meta.title &&
+        !isPlatformishTitle(meta.title, platform.label, platform.id)
+          ? meta.title
+          : undefined;
+      if (fromMeta) {
+        setLive({ url: link.url, title: fromMeta });
+        return;
+      }
+      const guessed = guessTitleFromUrl(link.url, platform.label);
+      if (
+        guessed &&
+        !isPlatformishTitle(guessed, platform.label, platform.id) &&
+        guessed !== storedTitle
+      ) {
+        setLive({ url: link.url, title: guessed });
+      }
     });
     return () => {
       cancelled = true;
     };
-  }, [link, platform.id, platform.label]);
+  }, [link, platform.id, platform.label, storedTitle]);
 
   return (
     <a
