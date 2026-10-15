@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
 import {
   extractYoutubeVideoId,
+  guessTitleFromUrl,
+  isPlatformishTitle,
   resolveLinkThumbnail,
 } from "@/lib/link-meta";
-import { cleanContentTitle, detectPlatform } from "@/lib/platform";
+import {
+  cleanContentTitle,
+  contentSlugFromUrl,
+  detectPlatform,
+} from "@/lib/platform";
 
 export const runtime = "nodejs";
 
@@ -41,6 +47,139 @@ async function fetchYoutubeOEmbed(url: string): Promise<MetaPayload | null> {
     thumbnailUrl:
       data.thumbnail_url?.trim() || resolveLinkThumbnail(url) || undefined,
   };
+}
+
+function parseAppleMusicIds(url: string): {
+  country: string;
+  trackId?: string;
+  albumId?: string;
+  slug?: string;
+} | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.replace(/^www\./, "") !== "music.apple.com") {
+      return null;
+    }
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    // /{country}/album|song|playlist/{slug}/{id}
+    const country = parts[0] || "us";
+    const kind = parts[1]?.toLowerCase();
+    const slug = parts[2] ? decodeURIComponent(parts[2]) : undefined;
+    const id = parts[3];
+    const trackId = parsed.searchParams.get("i") || undefined;
+    if (kind === "song" && id) {
+      return { country, trackId: id, slug };
+    }
+    if (kind === "album" && id) {
+      return { country, albumId: id, trackId, slug };
+    }
+    if (kind === "playlist") {
+      return { country, slug };
+    }
+    return { country, trackId, slug };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchItunesLookup(
+  id: string,
+  country: string,
+): Promise<MetaPayload | null> {
+  const endpoint = `https://itunes.apple.com/lookup?id=${encodeURIComponent(id)}&country=${encodeURIComponent(country)}`;
+  const res = await fetch(endpoint, {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as {
+    results?: Array<{
+      trackName?: string;
+      collectionName?: string;
+      artworkUrl100?: string;
+      artworkUrl600?: string;
+      wrapperType?: string;
+      kind?: string;
+    }>;
+  };
+  const results = data.results ?? [];
+  const track =
+    results.find((r) => r.trackName && (r.kind === "song" || r.wrapperType === "track")) ??
+    results.find((r) => r.trackName);
+  const collection = results.find((r) => r.collectionName);
+  const title = track?.trackName || collection?.collectionName;
+  const art =
+    track?.artworkUrl100 ||
+    collection?.artworkUrl100 ||
+    track?.artworkUrl600 ||
+    collection?.artworkUrl600;
+  if (!title && !art) return null;
+  return {
+    title: title?.trim() || undefined,
+    thumbnailUrl: art
+      ? art.replace(/\/\d+x\d+bb/, "/600x600bb")
+      : undefined,
+  };
+}
+
+async function fetchAppleMusicMeta(url: string): Promise<MetaPayload | null> {
+  const parsed = parseAppleMusicIds(url);
+  if (!parsed) return null;
+
+  // 曲 ID があれば最優先（OG が「ウェブプレーヤー」になるケースの本命）
+  if (parsed.trackId) {
+    const track = await fetchItunesLookup(parsed.trackId, parsed.country);
+    if (track?.title) return track;
+  }
+  if (parsed.albumId) {
+    const album = await fetchItunesLookup(parsed.albumId, parsed.country);
+    // スラッグと一致しない誤 ID のときはスラッグを優先
+    const slugTitle = parsed.slug?.replace(/[-_]+/g, " ").trim();
+    if (
+      album?.title &&
+      slugTitle &&
+      !album.title.toLowerCase().includes(slugTitle.toLowerCase().slice(0, 8)) &&
+      slugTitle.length > 2
+    ) {
+      // 誤ったアルバム ID（スラッグと不一致）のアートは使わない
+      return { title: slugTitle };
+    }
+    if (album?.title) return album;
+  }
+  if (parsed.slug) {
+    const slugTitle = parsed.slug.replace(/[-_]+/g, " ").trim();
+    if (slugTitle) return { title: slugTitle };
+  }
+  return null;
+}
+
+function pickBestTitle(
+  url: string,
+  candidates: Array<string | undefined>,
+): string | undefined {
+  const platform = detectPlatform(url);
+  for (const raw of candidates) {
+    const cleaned = cleanContentTitle(raw, platform.label);
+    if (
+      cleaned &&
+      !isPlatformishTitle(cleaned, platform.label, platform.id) &&
+      !isPlatformishTitle(raw, platform.label, platform.id)
+    ) {
+      return cleaned;
+    }
+  }
+  const guessed = guessTitleFromUrl(url, platform.label);
+  if (
+    guessed &&
+    !isPlatformishTitle(guessed, platform.label, platform.id)
+  ) {
+    return guessed;
+  }
+  const slug = contentSlugFromUrl(url);
+  if (slug && !isPlatformishTitle(slug, platform.label, platform.id)) {
+    return slug;
+  }
+  return cleanContentTitle(candidates.find(Boolean), platform.label);
 }
 
 function pickMetaFromHtml(html: string, baseUrl: string): MetaPayload {
@@ -139,22 +278,30 @@ export async function GET(request: Request) {
   const platform = detectPlatform(parsed.toString());
 
   try {
-    if (extractYoutubeVideoId(parsed.toString())) {
-      const yt = await fetchYoutubeOEmbed(parsed.toString());
+    const urlStr = parsed.toString();
+
+    if (extractYoutubeVideoId(urlStr)) {
+      const yt = await fetchYoutubeOEmbed(urlStr);
       return NextResponse.json({
-        title: cleanContentTitle(yt?.title, platform.label),
+        title: pickBestTitle(urlStr, [yt?.title]),
         thumbnailUrl: yt?.thumbnailUrl || localThumb,
       } satisfies MetaPayload);
     }
 
-    const og = await fetchOgMeta(parsed.toString());
+    const apple =
+      platform.id === "apple_music" ? await fetchAppleMusicMeta(urlStr) : null;
+    const og = await fetchOgMeta(urlStr);
+    const title = pickBestTitle(urlStr, [apple?.title, og.title]);
     return NextResponse.json({
-      title: cleanContentTitle(og.title, platform.label),
-      thumbnailUrl: og.thumbnailUrl || localThumb,
+      title,
+      thumbnailUrl: apple?.thumbnailUrl || og.thumbnailUrl || localThumb,
     } satisfies MetaPayload);
   } catch {
     return NextResponse.json(
-      { thumbnailUrl: localThumb } satisfies MetaPayload,
+      {
+        title: pickBestTitle(parsed.toString(), []),
+        thumbnailUrl: localThumb,
+      } satisfies MetaPayload,
       { status: 200 },
     );
   }

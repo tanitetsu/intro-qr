@@ -2,6 +2,7 @@ import type { LinkType, ProfileLink } from "@/lib/types";
 import type { MessageKey } from "@/lib/i18n/messages";
 import {
   cleanContentTitle,
+  contentSlugFromUrl,
   detectPlatform,
   isLikelyHomepageUrl,
 } from "@/lib/platform";
@@ -136,18 +137,19 @@ export function guessTitleFromUrl(url: string, fallback = "Link"): string {
     return getSnsLabel(url) ?? fallback;
   }
   const platform = detectPlatform(url);
+  const slug = contentSlugFromUrl(url);
+  if (
+    slug &&
+    !isPlatformishTitle(slug, platform.label, platform.id) &&
+    slug.toLowerCase() !== platform.label.toLowerCase()
+  ) {
+    return slug;
+  }
   try {
     const parsed = new URL(url.trim());
-    const parts = parsed.pathname.split("/").filter(Boolean);
-    // パス末尾を仮タイトルに（メタ取得前のフォールバック）
-    const last = parts[parts.length - 1];
-    if (last && last.length > 2 && !/^\d+$/.test(last)) {
-      const decoded = decodeURIComponent(last).replace(/[-_]+/g, " ").trim();
-      if (decoded && decoded.toLowerCase() !== platform.id) {
-        return decoded;
-      }
-    }
-    return platform.label !== "Link" ? platform.label : parsed.hostname.replace(/^www\./, "");
+    return platform.label !== "Link"
+      ? platform.label
+      : parsed.hostname.replace(/^www\./, "");
   } catch {
     return fallback;
   }
@@ -155,6 +157,9 @@ export function guessTitleFromUrl(url: string, fallback = "Link"): string {
 
 const CONTENT_KIND =
   "track|album|playlist|artwork|art|video|post|reel|podcast|episode|song|music|link|page|profile|channel|ショー|動画|曲";
+
+const GENERIC_SLOGANS =
+  /^(undefined|null|tiktok\s*[-–—:]\s*make your day|make your day|discover popular videos|sina visitor system|エラー|error)$/i;
 
 /** PF名や「Spotify track」「pixiv artwork」など中身のないタイトルか */
 export function isPlatformishTitle(
@@ -168,6 +173,8 @@ export function isPlatformishTitle(
   const label = platformLabel.toLowerCase();
   const idWords = platformId.replace(/_/g, " ").toLowerCase();
   if (lower === label || lower === idWords) return true;
+  if (GENERIC_SLOGANS.test(text)) return true;
+  if (/^undefined$/i.test(text)) return true;
   const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   if (
     new RegExp(`^${esc(label)}(\\s+(${CONTENT_KIND}))?$`, "i").test(text) ||
@@ -181,7 +188,8 @@ export function isPlatformishTitle(
       text,
     ) &&
     (lower.includes(label.split(/\s+/)[0] || label) ||
-      lower.includes(idWords.split(/\s+/)[0] || idWords))
+      lower.includes(idWords.split(/\s+/)[0] || idWords) ||
+      /tiktok|apple\s*music|spotify|weibo|facebook/i.test(text))
   ) {
     return true;
   }
@@ -220,10 +228,6 @@ export function displayLinkTitle(
   if (!titleBad && cleanedTitle) return cleanedTitle;
   if (commentGood && cleanedComment) return cleanedComment;
 
-  if (cleanedTitle && cleanedTitle.toLowerCase() !== platform.label.toLowerCase()) {
-    return cleanedTitle;
-  }
-
   const guessed = guessTitleFromUrl(link.url, platform.label);
   if (
     guessed &&
@@ -233,7 +237,15 @@ export function displayLinkTitle(
     return guessed;
   }
 
-  return cleanedTitle || link.title?.trim() || platform.label;
+  // 最後の手段: プラットフォーム名そのものよりは、非 platformish な cleaned を返す
+  if (
+    cleanedTitle &&
+    !isPlatformishTitle(cleanedTitle, platform.label, platform.id)
+  ) {
+    return cleanedTitle;
+  }
+
+  return guessed || cleanedTitle || link.title?.trim() || platform.label;
 }
 
 /** ユーザーメモのみ。調査メタやタイトル重複は出さない */
@@ -262,8 +274,18 @@ export function shouldRefreshLinkTitle(
   const platform = detectPlatform(link.url);
   if (isSnsProfileUrl(link.url)) return false;
   const shown = displayLinkTitle(link);
-  return (
+  if (
     isPlatformishTitle(shown, platform.label, platform.id) ||
+    isPlatformishTitle(link.title, platform.label, platform.id)
+  ) {
+    return true;
+  }
+  // 保存 title が PF 名寄りで、URL スラッグの方がマシなら再取得
+  const guessed = guessTitleFromUrl(link.url, platform.label);
+  return (
+    !!guessed &&
+    !isPlatformishTitle(guessed, platform.label, platform.id) &&
+    guessed.toLowerCase() !== shown.toLowerCase() &&
     isPlatformishTitle(link.title, platform.label, platform.id)
   );
 }
