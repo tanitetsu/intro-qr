@@ -11,7 +11,6 @@ const ja = {
   "common.delete": "削除",
   "common.add": "追加",
   "common.detail": "詳細",
-  "common.open": "開く",
   "common.photo": "写真",
   "common.share": "共有",
   "common.preview": "プレビュー",
@@ -72,6 +71,7 @@ const ja = {
   "album.note": "メモ",
   "album.facePhoto": "顔写真（この端末内のみ）",
   "album.receivedLinks": "受け取ったリンク",
+  "album.memoEmpty": "メモはありません",
 
   "auth.title": "ログイン",
   "auth.missingConfig": "Supabase の環境変数が未設定です。",
@@ -133,7 +133,6 @@ const en: Record<MessageKey, string> = {
   "common.delete": "Delete",
   "common.add": "Add",
   "common.detail": "Details",
-  "common.open": "Open",
   "common.photo": "Photo",
   "common.share": "Share",
   "common.preview": "Preview",
@@ -194,6 +193,7 @@ const en: Record<MessageKey, string> = {
   "album.note": "Note",
   "album.facePhoto": "Face photo (this device only)",
   "album.receivedLinks": "Received links",
+  "album.memoEmpty": "No note yet",
 
   "auth.title": "Sign in",
   "auth.missingConfig": "Supabase environment variables are not set.",
