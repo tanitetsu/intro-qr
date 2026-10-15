@@ -182,7 +182,12 @@ export function SavedDetailClient({ savedId }: { savedId: string }) {
           .slice()
           .sort((a, b) => a.order - b.order)
           .map((link) => (
-            <LinkCard key={link.id} link={link} compact />
+            <LinkCard
+              key={link.id}
+              link={link}
+              compact
+              openInBrowserButton
+            />
           ))}
       </section>
 
