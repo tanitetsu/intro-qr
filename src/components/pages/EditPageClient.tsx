@@ -13,13 +13,17 @@ import {
 } from "@/lib/storage";
 import {
   detectLinkType,
+  displayLinkTitle,
   fetchLinkMeta,
+  getSnsLabel,
   guessTitleFromUrl,
+  isSnsProfileUrl,
   resolveLinkThumbnail,
 } from "@/lib/link-meta";
 import { fileToIconDataUrl } from "@/lib/image";
 import { syncPageToCloud } from "@/lib/supabase/auto-sync";
 import type { AppData, ProfilePage } from "@/lib/types";
+import { PlatformIcon } from "@/components/links/PlatformIcon";
 
 const SYNC_DEBOUNCE_MS = 900;
 const META_DEBOUNCE_MS = 450;
@@ -292,6 +296,17 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           value={comment}
           onChange={(e) => setComment(e.target.value)}
         />
+        {url.trim().startsWith("http") ? (
+          <div className="flex items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 px-3 py-2">
+            <PlatformIcon url={url.trim()} />
+            <p className="min-w-0 truncate text-sm font-medium text-zinc-800">
+              {resolvedTitle ||
+                (metaBusy
+                  ? t("common.loading")
+                  : guessTitleFromUrl(url.trim(), defaultLinkTitle))}
+            </p>
+          </div>
+        ) : null}
         {thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -311,16 +326,20 @@ export function EditPageClient({ pageId }: { pageId: string }) {
               alert(t("edit.urlRequired"));
               return;
             }
+            const title =
+              resolvedTitle?.trim() ||
+              guessTitleFromUrl(trimmedUrl, defaultLinkTitle);
             commit((prev) =>
               addLinkToPage(prev, pageId, {
-                title:
-                  resolvedTitle?.trim() ||
-                  guessTitleFromUrl(trimmedUrl, defaultLinkTitle),
+                title: isSnsProfileUrl(trimmedUrl)
+                  ? getSnsLabel(trimmedUrl) || title
+                  : title,
                 url: trimmedUrl,
                 comment: comment.trim() || undefined,
                 type: detectLinkType(trimmedUrl),
-                thumbnailUrl:
-                  thumbnailUrl || resolveLinkThumbnail(trimmedUrl),
+                thumbnailUrl: isSnsProfileUrl(trimmedUrl)
+                  ? undefined
+                  : thumbnailUrl || resolveLinkThumbnail(trimmedUrl),
               }),
             );
             setUrl("");
@@ -343,8 +362,11 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           [...page.links]
             .sort((a, b) => a.order - b.order)
             .map((link) => {
-              const thumb =
-                link.thumbnailUrl || resolveLinkThumbnail(link.url);
+              const isProfile = isSnsProfileUrl(link.url);
+              const thumb = isProfile
+                ? undefined
+                : link.thumbnailUrl || resolveLinkThumbnail(link.url);
+              const title = displayLinkTitle(link);
               return (
                 <div
                   key={link.id}
@@ -359,15 +381,21 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                     />
                   ) : null}
                   <div className="flex items-start justify-between gap-2 p-3">
-                    <div className="min-w-0">
-                      <p className="break-all text-sm font-semibold">
-                        {link.url}
-                      </p>
-                      {link.comment ? (
-                        <p className="mt-1 text-xs text-zinc-500">
-                          {link.comment}
+                    <div className="flex min-w-0 items-start gap-2">
+                      <PlatformIcon url={link.url} className="mt-0.5" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-zinc-900">
+                          {title}
                         </p>
-                      ) : null}
+                        <p className="mt-0.5 truncate text-xs text-zinc-400">
+                          {link.url}
+                        </p>
+                        {link.comment ? (
+                          <p className="mt-1 text-xs text-zinc-500">
+                            {link.comment}
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
                     <button
                       type="button"

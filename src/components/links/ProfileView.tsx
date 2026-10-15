@@ -1,15 +1,16 @@
 "use client";
 
 import { LinkCard } from "@/components/links/LinkCard";
+import { PlatformIcon } from "@/components/links/PlatformIcon";
 import { useI18n } from "@/lib/i18n/locale";
-import { getSnsLabel, isSnsUrl } from "@/lib/link-meta";
+import { isSnsProfileUrl } from "@/lib/link-meta";
 import type { ProfilePage } from "@/lib/types";
 
 export function ProfileView({ page }: { page: ProfilePage }) {
   const { t } = useI18n();
   const sorted = [...page.links].sort((a, b) => a.order - b.order);
-  const snsLinks = sorted.filter((l) => isSnsUrl(l.url));
-  const otherLinks = sorted.filter((l) => !isSnsUrl(l.url));
+  const snsLinks = sorted.filter((l) => isSnsProfileUrl(l.url));
+  const otherLinks = sorted.filter((l) => !isSnsProfileUrl(l.url));
 
   const iconSrc = page.iconDataUrl?.trim();
 
@@ -40,9 +41,9 @@ export function ProfileView({ page }: { page: ProfilePage }) {
                 href={link.url}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 transition active:scale-[0.98]"
+                className="transition active:scale-[0.96]"
               >
-                {getSnsLabel(link.url) ?? link.title}
+                <PlatformIcon url={link.url} />
               </a>
             ))}
           </div>

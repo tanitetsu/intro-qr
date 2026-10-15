@@ -3,6 +3,7 @@ import {
   extractYoutubeVideoId,
   resolveLinkThumbnail,
 } from "@/lib/link-meta";
+import { cleanContentTitle, detectPlatform } from "@/lib/platform";
 
 export const runtime = "nodejs";
 
@@ -70,17 +71,21 @@ function pickMetaFromHtml(html: string, baseUrl: string): MetaPayload {
     }
   }
 
-  const title = rawTitle
-    ?.replace(/\s+/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/g, '"')
-    .trim();
+  const platform = detectPlatform(baseUrl);
+  const title = cleanContentTitle(
+    rawTitle
+      ?.replace(/\s+/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .trim(),
+    platform.label,
+  );
 
   return {
-    title: title || undefined,
+    title,
     thumbnailUrl,
   };
 }
@@ -131,18 +136,20 @@ export async function GET(request: Request) {
 
   const localThumb = resolveLinkThumbnail(parsed.toString());
 
+  const platform = detectPlatform(parsed.toString());
+
   try {
     if (extractYoutubeVideoId(parsed.toString())) {
       const yt = await fetchYoutubeOEmbed(parsed.toString());
       return NextResponse.json({
-        title: yt?.title,
+        title: cleanContentTitle(yt?.title, platform.label),
         thumbnailUrl: yt?.thumbnailUrl || localThumb,
       } satisfies MetaPayload);
     }
 
     const og = await fetchOgMeta(parsed.toString());
     return NextResponse.json({
-      title: og.title,
+      title: cleanContentTitle(og.title, platform.label),
       thumbnailUrl: og.thumbnailUrl || localThumb,
     } satisfies MetaPayload);
   } catch {
