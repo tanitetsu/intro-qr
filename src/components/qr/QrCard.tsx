@@ -124,7 +124,7 @@ export function QrCard({
   subtitle?: string;
 }) {
   const { t } = useI18n();
-  const tooLong = value.length > 1200;
+  const tooLong = value.length > 1200; // keep in sync with share-limits.QR_URL_MAX_CHARS
   const [status, setStatus] = useState<ShareStatus>({ kind: "idle" });
   const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
