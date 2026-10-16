@@ -107,7 +107,7 @@ export function HomeClient() {
   }
 
   return (
-    <div className="space-y-4 py-4">
+    <div className="flex min-h-[calc(100dvh-6rem)] flex-col justify-center py-4">
       <PageCarousel
         items={pages.map((p) => ({ id: p.id, label: p.title }))}
         activeId={activePage.id}
