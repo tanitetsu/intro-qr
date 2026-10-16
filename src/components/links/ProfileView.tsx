@@ -1,16 +1,16 @@
 "use client";
 
+import { ContactLink } from "@/components/links/ContactLink";
 import { LinkCard } from "@/components/links/LinkCard";
-import { PlatformIcon } from "@/components/links/PlatformIcon";
 import { useI18n } from "@/lib/i18n/locale";
-import { isSnsProfileUrl } from "@/lib/link-meta";
+import { isContactProfileUrl } from "@/lib/link-meta";
 import type { ProfilePage } from "@/lib/types";
 
 export function ProfileView({ page }: { page: ProfilePage }) {
   const { t } = useI18n();
   const sorted = [...page.links].sort((a, b) => a.order - b.order);
-  const snsLinks = sorted.filter((l) => isSnsProfileUrl(l.url));
-  const otherLinks = sorted.filter((l) => !isSnsProfileUrl(l.url));
+  const contactLinks = sorted.filter((l) => isContactProfileUrl(l.url));
+  const otherLinks = sorted.filter((l) => !isContactProfileUrl(l.url));
 
   const iconSrc = page.iconDataUrl?.trim();
 
@@ -33,25 +33,17 @@ export function ProfileView({ page }: { page: ProfilePage }) {
             <p className="text-sm leading-6 text-zinc-600">{page.bio}</p>
           ) : null}
         </div>
-        {snsLinks.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {snsLinks.map((link) => (
-              <a
-                key={link.id}
-                href={link.url}
-                target="_blank"
-                rel="noreferrer"
-                className="transition active:scale-[0.96]"
-              >
-                <PlatformIcon url={link.url} />
-              </a>
+        {contactLinks.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-1">
+            {contactLinks.map((link) => (
+              <ContactLink key={link.id} url={link.url} />
             ))}
           </div>
         ) : null}
       </header>
 
       <section className="space-y-3">
-        {otherLinks.length === 0 && snsLinks.length === 0 ? (
+        {otherLinks.length === 0 && contactLinks.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-zinc-300 bg-white/60 p-4 text-sm text-zinc-500">
             {t("profile.noLinks")}
           </p>

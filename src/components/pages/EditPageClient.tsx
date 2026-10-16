@@ -11,6 +11,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ContactLink } from "@/components/links/ContactLink";
 import { PlatformIcon } from "@/components/links/PlatformIcon";
 import { IconButton, IconLink } from "@/components/ui/IconButton";
 import { useAppData } from "@/lib/app-data";
@@ -29,8 +30,9 @@ import {
   fetchLinkMeta,
   getSnsLabel,
   guessTitleFromUrl,
+  isContactProfileUrl,
   isPlatformishTitle,
-  isSnsProfileUrl,
+  profileHandleFromUrl,
   resolveLinkThumbnail,
 } from "@/lib/link-meta";
 import { detectPlatform } from "@/lib/platform";
@@ -377,24 +379,26 @@ export function EditPageClient({ pageId }: { pageId: string }) {
               guessTitleFromUrl(trimmedUrl, defaultLinkTitle);
             // PF名だけのタイトルは保存しない（コメント側にコンテンツ名があればそちらを採用）
             const note = comment.trim();
+            const contact = isContactProfileUrl(trimmedUrl);
             if (
-              !isSnsProfileUrl(trimmedUrl) &&
+              !contact &&
               isPlatformishTitle(title, platform.label, platform.id) &&
               note &&
               !isPlatformishTitle(note, platform.label, platform.id)
             ) {
               title = note;
             }
+            const handle = profileHandleFromUrl(trimmedUrl);
             commit((prev) =>
               addLinkToPage(prev, pageId, {
-                title: isSnsProfileUrl(trimmedUrl)
-                  ? getSnsLabel(trimmedUrl) || title
+                title: contact
+                  ? handle || getSnsLabel(trimmedUrl) || platform.label
                   : title,
                 url: trimmedUrl,
                 comment:
                   note && note !== title ? note : undefined,
                 type: detectLinkType(trimmedUrl),
-                thumbnailUrl: isSnsProfileUrl(trimmedUrl)
+                thumbnailUrl: contact
                   ? undefined
                   : thumbnailUrl || resolveLinkThumbnail(trimmedUrl),
               }),
@@ -419,7 +423,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
           [...page.links]
             .sort((a, b) => a.order - b.order)
             .map((link) => {
-              const isProfile = isSnsProfileUrl(link.url);
+              const isProfile = isContactProfileUrl(link.url);
               const thumb = isProfile
                 ? undefined
                 : link.thumbnailUrl || resolveLinkThumbnail(link.url);
@@ -438,8 +442,11 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                       className="h-28 w-full object-cover"
                     />
                   ) : null}
-                  <div className="flex items-start justify-between gap-2 p-3">
-                    <div className="flex min-w-0 items-start gap-2">
+                  <div className="flex items-center justify-between gap-2 p-2">
+                    {isProfile ? (
+                      <ContactLink url={link.url} />
+                    ) : (
+                    <div className="flex min-w-0 items-start gap-2 p-1">
                       <PlatformIcon url={link.url} className="mt-0.5" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-zinc-900">
@@ -453,6 +460,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                         ) : null}
                       </div>
                     </div>
+                    )}
                     <IconButton
                       label={t("common.delete")}
                       tone="danger"
