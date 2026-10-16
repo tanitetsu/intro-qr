@@ -104,7 +104,11 @@ const RULES: Rule[] = [
     id: "threads",
     label: "Threads",
     color: "#000000",
-    match: (h) => h === "threads.net" || h.endsWith(".threads.net"),
+    match: (h) =>
+      h === "threads.net" ||
+      h.endsWith(".threads.net") ||
+      h === "threads.com" ||
+      h.endsWith(".threads.com"),
   },
   {
     id: "linkedin",
