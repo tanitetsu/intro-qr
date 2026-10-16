@@ -148,9 +148,11 @@ function Glyph({ id }: { id: PlatformId }) {
 export function PlatformIcon({
   url,
   className = "",
+  decorative = false,
 }: {
   url: string;
   className?: string;
+  decorative?: boolean;
 }) {
   const platform = detectPlatform(url);
   const lightBg =
@@ -159,8 +161,9 @@ export function PlatformIcon({
     platform.id === "lemon8";
   return (
     <span
-      title={platform.label}
-      aria-label={platform.label}
+      title={decorative ? undefined : platform.label}
+      aria-label={decorative ? undefined : platform.label}
+      aria-hidden={decorative || undefined}
       className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${className}`}
       style={{
         backgroundColor: platform.color,

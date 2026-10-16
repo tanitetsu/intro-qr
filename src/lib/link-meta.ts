@@ -112,9 +112,73 @@ export function isSnsProfileUrl(url: string): boolean {
   }
 }
 
+/**
+ * 自己紹介に置く連絡先プロフィールか。
+ * 投稿・動画・配信アーカイブは false。
+ */
+export function isContactProfileUrl(url: string): boolean {
+  if (isSnsProfileUrl(url)) return true;
+  try {
+    const parsed = new URL(url.trim());
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    if (host === "linkedin.com" || host.endsWith(".linkedin.com")) {
+      const kind = parts[0]?.toLowerCase();
+      return (
+        (kind === "in" || kind === "company" || kind === "school") &&
+        parts.length === 2
+      );
+    }
+    if (host === "twitch.tv" || host.endsWith(".twitch.tv")) {
+      const reserved = new Set([
+        "videos",
+        "directory",
+        "settings",
+        "subscriptions",
+        "inventory",
+        "drops",
+        "search",
+        "downloads",
+      ]);
+      return parts.length === 1 && !reserved.has(parts[0].toLowerCase());
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/** 連絡先 URL から表示用のユーザー名。取れなければ undefined */
+export function profileHandleFromUrl(url: string): string | undefined {
+  if (!isContactProfileUrl(url)) return undefined;
+  try {
+    const parsed = new URL(url.trim());
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    if (host === "lin.ee" || host === "line.me" || host.endsWith(".line.me")) {
+      return undefined;
+    }
+    if (host === "linkedin.com" || host.endsWith(".linkedin.com")) {
+      const slug = parts[1];
+      if (!slug) return undefined;
+      const name = decodeURIComponent(slug).replace(/[-_]+/g, " ").trim();
+      return name || undefined;
+    }
+    const at = parts.find((part) => part.startsWith("@"));
+    const raw = at ? at.slice(1) : parts.length === 1 ? parts[0] : undefined;
+    if (!raw) return undefined;
+    const name = decodeURIComponent(raw).trim();
+    if (!name || name.length > 40) return undefined;
+    if (/^[a-z0-9]{20,}$/i.test(name)) return undefined;
+    return `@${name}`;
+  } catch {
+    return undefined;
+  }
+}
+
 export function detectLinkType(url: string): LinkType {
   const u = url.toLowerCase();
-  if (isSnsProfileUrl(url)) {
+  if (isContactProfileUrl(url)) {
     return "contact";
   }
   if (
@@ -133,8 +197,10 @@ export function detectLinkType(url: string): LinkType {
 }
 
 export function guessTitleFromUrl(url: string, fallback = "Link"): string {
-  if (isSnsProfileUrl(url)) {
-    return getSnsLabel(url) ?? fallback;
+  const handle = profileHandleFromUrl(url);
+  if (handle) return handle;
+  if (isContactProfileUrl(url)) {
+    return getSnsLabel(url) ?? detectPlatform(url).label;
   }
   const platform = detectPlatform(url);
   const slug = contentSlugFromUrl(url);
@@ -272,7 +338,7 @@ export function shouldRefreshLinkTitle(
   link: Pick<ProfileLink, "url" | "title" | "comment">,
 ): boolean {
   const platform = detectPlatform(link.url);
-  if (isSnsProfileUrl(link.url)) return false;
+  if (isContactProfileUrl(link.url)) return false;
   const shown = displayLinkTitle(link);
   if (
     isPlatformishTitle(shown, platform.label, platform.id) ||
