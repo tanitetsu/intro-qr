@@ -89,6 +89,7 @@ export function LinkCard({
           <p className="text-base font-semibold leading-snug text-zinc-900">
             {title}
           </p>
+          <p className="text-xs leading-4 text-zinc-500">{platform.label}</p>
           {comment ? (
             <p className="text-sm leading-5 text-zinc-600">{comment}</p>
           ) : null}
