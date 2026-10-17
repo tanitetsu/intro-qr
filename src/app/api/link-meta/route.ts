@@ -3,6 +3,7 @@ import {
   extractYoutubeVideoId,
   guessTitleFromUrl,
   isPlatformishTitle,
+  pickUsableThumbnail,
   resolveLinkThumbnail,
 } from "@/lib/link-meta";
 import {
@@ -284,7 +285,7 @@ export async function GET(request: Request) {
       const yt = await fetchYoutubeOEmbed(urlStr);
       return NextResponse.json({
         title: pickBestTitle(urlStr, [yt?.title]),
-        thumbnailUrl: yt?.thumbnailUrl || localThumb,
+        thumbnailUrl: pickUsableThumbnail(yt?.thumbnailUrl, localThumb),
       } satisfies MetaPayload);
     }
 
@@ -294,13 +295,17 @@ export async function GET(request: Request) {
     const title = pickBestTitle(urlStr, [apple?.title, og.title]);
     return NextResponse.json({
       title,
-      thumbnailUrl: apple?.thumbnailUrl || og.thumbnailUrl || localThumb,
+      thumbnailUrl: pickUsableThumbnail(
+        apple?.thumbnailUrl,
+        og.thumbnailUrl,
+        localThumb,
+      ),
     } satisfies MetaPayload);
   } catch {
     return NextResponse.json(
       {
         title: pickBestTitle(parsed.toString(), []),
-        thumbnailUrl: localThumb,
+        thumbnailUrl: pickUsableThumbnail(localThumb),
       } satisfies MetaPayload,
       { status: 200 },
     );
