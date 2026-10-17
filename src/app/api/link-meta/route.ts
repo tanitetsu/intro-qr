@@ -5,6 +5,7 @@ import {
   isPlatformishTitle,
   resolveLinkThumbnail,
 } from "@/lib/link-meta";
+import { fetchProviderMeta, rewriteForOgFetch } from "@/lib/content-meta";
 import {
   cleanContentTitle,
   contentSlugFromUrl,
@@ -290,11 +291,19 @@ export async function GET(request: Request) {
 
     const apple =
       platform.id === "apple_music" ? await fetchAppleMusicMeta(urlStr) : null;
-    const og = await fetchOgMeta(urlStr);
-    const title = pickBestTitle(urlStr, [apple?.title, og.title]);
+    const provider = await fetchProviderMeta(urlStr);
+    const og =
+      provider?.title && provider.thumbnailUrl
+        ? {}
+        : await fetchOgMeta(rewriteForOgFetch(urlStr));
+    const title = pickBestTitle(urlStr, [apple?.title, provider?.title, og.title]);
     return NextResponse.json({
       title,
-      thumbnailUrl: apple?.thumbnailUrl || og.thumbnailUrl || localThumb,
+      thumbnailUrl:
+        apple?.thumbnailUrl ||
+        provider?.thumbnailUrl ||
+        og.thumbnailUrl ||
+        localThumb,
     } satisfies MetaPayload);
   } catch {
     return NextResponse.json(
