@@ -58,6 +58,27 @@ export type PlatformId =
   | "ameba"
   | "line"
   | "discord"
+  | "abema"
+  | "about_me"
+  | "amazon"
+  | "carrd"
+  | "ea"
+  | "google_calendar"
+  | "google_meet"
+  | "google_sites"
+  | "lemon_squeezy"
+  | "mixi"
+  | "naver"
+  | "orcid"
+  | "openstreetmap"
+  | "tistory"
+  | "venmo"
+  | "devto"
+  | "tver"
+  | "snapchat"
+  | "telegram"
+  | "researchgate"
+  | "hashnode"
   | "other";
 
 export type PlatformInfo = {
@@ -104,7 +125,11 @@ const RULES: Rule[] = [
     id: "threads",
     label: "Threads",
     color: "#000000",
-    match: (h) => h === "threads.net" || h.endsWith(".threads.net"),
+    match: (h) =>
+      h === "threads.net" ||
+      h.endsWith(".threads.net") ||
+      h === "threads.com" ||
+      h.endsWith(".threads.com"),
   },
   {
     id: "linkedin",
@@ -408,7 +433,10 @@ const RULES: Rule[] = [
     id: "steam",
     label: "Steam",
     color: "#171A21",
-    match: (h) => h.includes("steampowered") || h === "store.steampowered.com",
+    match: (h) =>
+      h.includes("steampowered") ||
+      h === "steamcommunity.com" ||
+      h.endsWith(".steamcommunity.com"),
   },
   {
     id: "roblox",
@@ -440,6 +468,149 @@ const RULES: Rule[] = [
     label: "Discord",
     color: "#5865F2",
     match: (h) => h === "discord.com" || h === "discord.gg",
+  },
+  {
+    id: "abema",
+    label: "Abema",
+    color: "#000000",
+    match: (h) => h === "abema.tv" || h.endsWith(".abema.tv"),
+  },
+  {
+    id: "about_me",
+    label: "About.me",
+    color: "#000000",
+    match: (h) => h === "about.me" || h.endsWith(".about.me"),
+  },
+  {
+    id: "amazon",
+    label: "Amazon",
+    color: "#FF9900",
+    match: (h) =>
+      /(?:^|\.)amazon\.(?:co\.)?[a-z]{2,3}$/.test(h),
+  },
+  {
+    id: "carrd",
+    label: "Carrd",
+    color: "#1F1F1F",
+    match: (h) => h === "carrd.co" || h.endsWith(".carrd.co"),
+  },
+  {
+    id: "ea",
+    label: "EA",
+    color: "#000000",
+    match: (h) => h === "ea.com" || h.endsWith(".ea.com"),
+  },
+  {
+    id: "google_calendar",
+    label: "Google Calendar",
+    color: "#4285F4",
+    match: (h, path) =>
+      h === "calendar.google.com" ||
+      (h.endsWith("google.com") && /\/calendar(\/|$)/.test(path)),
+  },
+  {
+    id: "google_meet",
+    label: "Google Meet",
+    color: "#00832D",
+    match: (h, path) =>
+      h === "meet.google.com" ||
+      (h.endsWith("google.com") && /\/meet(\/|$)/.test(path)),
+  },
+  {
+    id: "google_sites",
+    label: "Google Sites",
+    color: "#1A73E8",
+    match: (h) => h === "sites.google.com",
+  },
+  {
+    id: "lemon_squeezy",
+    label: "Lemon Squeezy",
+    color: "#FFC233",
+    match: (h) =>
+      h === "lemonsqueezy.com" || h.endsWith(".lemonsqueezy.com"),
+  },
+  {
+    id: "mixi",
+    label: "mixi",
+    color: "#FFD400",
+    match: (h) => h === "mixi.jp" || h.endsWith(".mixi.jp"),
+  },
+  {
+    id: "naver",
+    label: "Naver",
+    color: "#03C75A",
+    match: (h) => h === "naver.com" || h.endsWith(".naver.com"),
+  },
+  {
+    id: "orcid",
+    label: "ORCID",
+    color: "#A6CE39",
+    match: (h) => h === "orcid.org" || h.endsWith(".orcid.org"),
+  },
+  {
+    id: "openstreetmap",
+    label: "OpenStreetMap",
+    color: "#7EBC6F",
+    match: (h) =>
+      h === "openstreetmap.org" || h.endsWith(".openstreetmap.org"),
+  },
+  {
+    id: "tistory",
+    label: "Tistory",
+    color: "#000000",
+    match: (h) => h === "tistory.com" || h.endsWith(".tistory.com"),
+  },
+  {
+    id: "venmo",
+    label: "Venmo",
+    color: "#008CFF",
+    match: (h) => h === "venmo.com" || h.endsWith(".venmo.com"),
+  },
+  {
+    id: "devto",
+    label: "DEV",
+    color: "#0A0A0A",
+    match: (h) => h === "dev.to" || h.endsWith(".dev.to"),
+  },
+  {
+    id: "tver",
+    label: "TVer",
+    color: "#111111",
+    match: (h) => h === "tver.jp" || h.endsWith(".tver.jp"),
+  },
+  {
+    id: "snapchat",
+    label: "Snapchat",
+    color: "#FFFC00",
+    match: (h) => h === "snapchat.com" || h.endsWith(".snapchat.com"),
+  },
+  {
+    id: "telegram",
+    label: "Telegram",
+    color: "#26A5E4",
+    match: (h) =>
+      h === "t.me" ||
+      h === "telegram.me" ||
+      h === "telegram.org" ||
+      h.endsWith(".telegram.org") ||
+      h.endsWith(".t.me"),
+  },
+  {
+    id: "researchgate",
+    label: "ResearchGate",
+    color: "#00CCBB",
+    match: (h) =>
+      h === "researchgate.net" || h.endsWith(".researchgate.net"),
+  },
+  {
+    id: "hashnode",
+    label: "Hashnode",
+    color: "#2962FF",
+    match: (h) =>
+      h === "hashnode.com" ||
+      h.endsWith(".hashnode.com") ||
+      h === "hashnode.dev" ||
+      h.endsWith(".hashnode.dev"),
   },
 ];
 

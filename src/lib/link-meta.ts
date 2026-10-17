@@ -30,7 +30,11 @@ const SNS_HOST_LABELS: { match: (host: string) => boolean; label: string }[] = [
     label: "TikTok",
   },
   {
-    match: (h) => h === "threads.net" || h.endsWith(".threads.net"),
+    match: (h) =>
+      h === "threads.net" ||
+      h.endsWith(".threads.net") ||
+      h === "threads.com" ||
+      h.endsWith(".threads.com"),
     label: "Threads",
   },
 ];
@@ -65,7 +69,12 @@ function isSnsContentPath(host: string, path: string, search: string): boolean {
       parts[0] === "permalink.php"
     );
   }
-  if (host === "threads.net" || host.endsWith(".threads.net")) {
+  if (
+    host === "threads.net" ||
+    host.endsWith(".threads.net") ||
+    host === "threads.com" ||
+    host.endsWith(".threads.com")
+  ) {
     return parts.includes("post");
   }
   return false;
