@@ -344,12 +344,71 @@ export function resolveLinkThumbnail(url: string): string | undefined {
   return undefined;
 }
 
+/**
+ * 個別コンテンツの画像ではなく、PF の既定ロゴやサイト共通の共有画像か。
+ * ファイル名の「nologo」はロゴ扱いしない。
+ */
+export function isPlaceholderThumbnailUrl(raw: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw.trim());
+  } catch {
+    return true;
+  }
+  const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+  const path = `${parsed.pathname}${parsed.search}`.toLowerCase();
+  const file = (parsed.pathname.split("/").pop() ?? "").toLowerCase();
+
+  if (
+    /(?:^|[^a-z])logo(?:[^a-z]|$)/.test(file) ||
+    /(?:^|[^a-z])(?!no)[a-z]{0,3}logo\d/.test(file)
+  ) {
+    return true;
+  }
+  if (
+    path.includes("twitter_card") ||
+    path.includes("portal_ogp") ||
+    /transparent\.(png|gif|webp|jpe?g)/.test(path) ||
+    /(?:^|\/)ogimage(?:-v?\d+)?\./.test(path) ||
+    path.includes("placeholder") ||
+    path.includes("favicon")
+  ) {
+    return true;
+  }
+
+  // 投稿 CDN ではなく、アプリの静的アセット。
+  if (host === "static.licdn.com" && path.includes("/aero-v1/sc/")) return true;
+  if (host === "picasso-static.xiaohongshu.com") return true;
+  if (
+    host.endsWith("zoom.us") &&
+    /\/static\/.+\/(?:thumb|default)\.(png|jpe?g|webp)/.test(path)
+  ) {
+    return true;
+  }
+  if (host === "static-cdn.jtvnw.net" && path.includes("/ttv-static-metadata/")) {
+    return true;
+  }
+  if (host === "s.pximg.net" && path.includes("/www/images/")) return true;
+
+  return false;
+}
+
+/** 個別コンテンツとして表示してよいサムネだけを残す */
+export function pickUsableThumbnail(
+  ...candidates: Array<string | undefined | null>
+): string | undefined {
+  for (const candidate of candidates) {
+    const url = candidate?.trim();
+    if (!url || isPlaceholderThumbnailUrl(url)) continue;
+    return url;
+  }
+  return undefined;
+}
+
 export function displayThumbnailUrl(
   link: Pick<ProfileLink, "url" | "thumbnailUrl">,
 ): string | undefined {
-  const stored = link.thumbnailUrl?.trim();
-  if (stored) return stored;
-  return resolveLinkThumbnail(link.url);
+  return pickUsableThumbnail(link.thumbnailUrl, resolveLinkThumbnail(link.url));
 }
 
 export type LinkMetaResult = {
@@ -368,15 +427,15 @@ export async function fetchLinkMeta(url: string): Promise<LinkMetaResult> {
       { signal: AbortSignal.timeout(8000) },
     );
     if (!res.ok) {
-      return { thumbnailUrl: localThumb };
+      return { thumbnailUrl: pickUsableThumbnail(localThumb) };
     }
     const data = (await res.json()) as LinkMetaResult;
     return {
       title: cleanContentTitle(data.title, platform.label),
-      thumbnailUrl: data.thumbnailUrl?.trim() || localThumb,
+      thumbnailUrl: pickUsableThumbnail(data.thumbnailUrl, localThumb),
     };
   } catch {
-    return { thumbnailUrl: localThumb };
+    return { thumbnailUrl: pickUsableThumbnail(localThumb) };
   }
 }
 

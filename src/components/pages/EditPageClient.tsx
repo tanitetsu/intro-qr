@@ -26,11 +26,13 @@ import {
   detectLinkType,
   displayLinkComment,
   displayLinkTitle,
+  displayThumbnailUrl,
   fetchLinkMeta,
   getSnsLabel,
   guessTitleFromUrl,
   isPlatformishTitle,
   isSnsProfileUrl,
+  pickUsableThumbnail,
   resolveLinkThumbnail,
 } from "@/lib/link-meta";
 import { detectPlatform } from "@/lib/platform";
@@ -396,7 +398,10 @@ export function EditPageClient({ pageId }: { pageId: string }) {
                 type: detectLinkType(trimmedUrl),
                 thumbnailUrl: isSnsProfileUrl(trimmedUrl)
                   ? undefined
-                  : thumbnailUrl || resolveLinkThumbnail(trimmedUrl),
+                  : pickUsableThumbnail(
+                      thumbnailUrl,
+                      resolveLinkThumbnail(trimmedUrl),
+                    ),
               }),
             );
             setUrl("");
@@ -420,9 +425,7 @@ export function EditPageClient({ pageId }: { pageId: string }) {
             .sort((a, b) => a.order - b.order)
             .map((link) => {
               const isProfile = isSnsProfileUrl(link.url);
-              const thumb = isProfile
-                ? undefined
-                : link.thumbnailUrl || resolveLinkThumbnail(link.url);
+              const thumb = isProfile ? undefined : displayThumbnailUrl(link);
               const title = displayLinkTitle(link);
               const note = displayLinkComment(link);
               return (
