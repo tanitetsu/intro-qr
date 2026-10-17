@@ -3,31 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 import { detectPlatform, type PlatformId } from "@/lib/platform";
 
-/** 既に公式マークとして描いてある PF。それ以外は各ホストのアイコンを取得する。 */
-const OFFICIAL_DRAWN = new Set<PlatformId>([
-  "youtube",
-  "spotify",
-  "github",
-  "linkedin",
-  "x",
-  "instagram",
-  "tiktok",
-  "facebook",
-  "twitch",
-  "soundcloud",
-  "apple_music",
-  "apple_podcasts",
-  "discord",
-  "amazon",
-  "ea",
-  "google_meet",
-  "lemon_squeezy",
-  "naver",
-  "tistory",
-  "telegram",
-  "hashnode",
-  "steam",
-]);
+/**
+ * ホスト直下の favicon がロゴにならない PF。
+ * よくある公開 URL のロゴ画像を先に使う。ファイルはリポジトリに置かない。
+ */
+const PREFERRED_LOGO: Partial<Record<PlatformId, string>> = {
+  amazon:
+    "https://m.media-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png",
+  discord: "https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/discord.svg",
+  ea: "https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/ea.svg",
+  google_meet: "https://www.gstatic.com/meet/icons/favicon-2026-v2.png",
+  dribbble: "https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/dribbble.svg",
+  artstation:
+    "https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/artstation.svg",
+  epic: "https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/epicgames.svg",
+};
 
 function Glyph({ id }: { id: PlatformId }) {
   // 簡易ブランド字形（外部画像に依存しない）
@@ -397,12 +387,19 @@ function brandIconUrls(pageUrl: string): string[] {
 /** 取得できた公式アイコン。直リンクも HTML 上の icon も失敗したら今の字形に戻す。 */
 function FetchedBrandIcon({
   url,
+  preferred,
+  contain = false,
   onExhausted,
 }: {
   url: string;
+  preferred?: string;
+  contain?: boolean;
   onExhausted: () => void;
 }) {
-  const sources = brandIconUrls(url);
+  const sources = preferred
+    ? [preferred, ...brandIconUrls(url)]
+    : brandIconUrls(url);
+  const fit = contain ? "object-contain" : "object-cover";
   const [index, setIndex] = useState(0);
   const [forUrl, setForUrl] = useState(url);
   const [discovered, setDiscovered] = useState<string | null>(null);
@@ -449,7 +446,7 @@ function FetchedBrandIcon({
         src={discovered}
         alt=""
         referrerPolicy="no-referrer"
-        className="h-full w-full object-cover"
+        className={`h-full w-full ${fit}`}
         onLoad={(event) => {
           const img = event.currentTarget;
           if (img.naturalWidth < 8 || img.naturalHeight < 8) onExhaustedRef.current();
@@ -465,7 +462,7 @@ function FetchedBrandIcon({
       src={sources[index]}
       alt=""
       referrerPolicy="no-referrer"
-      className="h-full w-full object-cover"
+      className={`h-full w-full ${fit}`}
       onLoad={(event) => {
         const img = event.currentTarget;
         if (img.naturalWidth < 8 || img.naturalHeight < 8) {
@@ -514,8 +511,8 @@ export function PlatformIcon({
 }) {
   const platform = detectPlatform(url);
   const lightBg = LIGHT_BG.has(platform.id);
-  const fetchFromHost =
-    platform.id !== "other" && !OFFICIAL_DRAWN.has(platform.id);
+  const fetchFromHost = platform.id !== "other";
+  const preferred = PREFERRED_LOGO[platform.id];
   const [fetchFailed, setFetchFailed] = useState(false);
   const [failedFor, setFailedFor] = useState(url);
   if (failedFor !== url) {
@@ -538,6 +535,8 @@ export function PlatformIcon({
       ) : showFetched ? (
         <FetchedBrandIcon
           url={url}
+          preferred={preferred}
+          contain={platform.id === "amazon"}
           onExhausted={() => setFetchFailed(true)}
         />
       ) : (
