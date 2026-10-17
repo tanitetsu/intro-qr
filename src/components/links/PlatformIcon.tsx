@@ -1,7 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { detectPlatform, type PlatformId } from "@/lib/platform";
+
+/** 既に公式マークとして描いてある PF。それ以外は各ホストのアイコンを取得する。 */
+const OFFICIAL_DRAWN = new Set<PlatformId>([
+  "youtube",
+  "spotify",
+  "github",
+  "linkedin",
+  "x",
+  "instagram",
+  "tiktok",
+  "facebook",
+  "twitch",
+  "soundcloud",
+  "apple_music",
+  "apple_podcasts",
+  "discord",
+  "amazon",
+  "ea",
+  "google_meet",
+  "lemon_squeezy",
+  "naver",
+  "tistory",
+  "telegram",
+  "hashnode",
+  "steam",
+]);
 
 function Glyph({ id }: { id: PlatformId }) {
   // 簡易ブランド字形（外部画像に依存しない）
@@ -334,6 +360,123 @@ const LIGHT_BG = new Set<PlatformId>([
   "snapchat",
 ]);
 
+/**
+ * リンク先ホストの apple-touch-icon / favicon。
+ * サブドメインで取れないときは親ホストも試す。
+ */
+function brandIconUrls(pageUrl: string): string[] {
+  let parsed: URL;
+  try {
+    parsed = new URL(pageUrl.trim());
+  } catch {
+    return [];
+  }
+  const protocol = parsed.protocol === "http:" ? "http:" : "https:";
+  const host = parsed.hostname.replace(/\.$/, "").toLowerCase();
+  if (!host) return [];
+  const hosts = [host];
+  const labels = host.split(".").filter(Boolean);
+  if (labels.length > 2) {
+    const parent = labels.slice(-2).join(".");
+    if (!/^(co|com|ne|or|ac|go|gov|org|net|edu)\.[a-z]{2}$/.test(parent)) {
+      hosts.push(parent);
+    }
+  }
+  // ストア用ホストはロゴを置いていないので、ブランド本体も見る。
+  if (host === "myshopify.com" || host.endsWith(".myshopify.com")) {
+    hosts.push("shopify.com");
+  }
+  const paths = [
+    "/apple-touch-icon.png",
+    "/apple-touch-icon-precomposed.png",
+    "/favicon.ico",
+  ];
+  return hosts.flatMap((name) => paths.map((path) => `${protocol}//${name}${path}`));
+}
+
+/** 取得できた公式アイコン。直リンクも HTML 上の icon も失敗したら今の字形に戻す。 */
+function FetchedBrandIcon({
+  url,
+  onExhausted,
+}: {
+  url: string;
+  onExhausted: () => void;
+}) {
+  const sources = brandIconUrls(url);
+  const [index, setIndex] = useState(0);
+  const [forUrl, setForUrl] = useState(url);
+  const [discovered, setDiscovered] = useState<string | null>(null);
+  const onExhaustedRef = useRef(onExhausted);
+  onExhaustedRef.current = onExhausted;
+  if (forUrl !== url) {
+    setForUrl(url);
+    setIndex(0);
+    setDiscovered(null);
+  }
+  const directDone = sources.length === 0 || index >= sources.length;
+  useEffect(() => {
+    if (!directDone || discovered) return;
+    const ctrl = new AbortController();
+    let cancelled = false;
+    const timer = setTimeout(() => ctrl.abort(), 5000);
+    fetch(`/api/brand-icon?url=${encodeURIComponent(url)}`, {
+      signal: ctrl.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        const data = (await res.json()) as { src?: string };
+        return data.src?.trim() || null;
+      })
+      .then((src) => {
+        if (cancelled) return;
+        if (src) setDiscovered(src);
+        else onExhaustedRef.current();
+      })
+      .catch(() => {
+        if (!cancelled) onExhaustedRef.current();
+      })
+      .finally(() => clearTimeout(timer));
+    return () => {
+      cancelled = true;
+      ctrl.abort();
+      clearTimeout(timer);
+    };
+  }, [directDone, discovered, url]);
+  if (discovered) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={discovered}
+        alt=""
+        referrerPolicy="no-referrer"
+        className="h-full w-full object-cover"
+        onLoad={(event) => {
+          const img = event.currentTarget;
+          if (img.naturalWidth < 8 || img.naturalHeight < 8) onExhaustedRef.current();
+        }}
+        onError={() => onExhaustedRef.current()}
+      />
+    );
+  }
+  if (directDone) return null;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={sources[index]}
+      alt=""
+      referrerPolicy="no-referrer"
+      className="h-full w-full object-cover"
+      onLoad={(event) => {
+        const img = event.currentTarget;
+        if (img.naturalWidth < 8 || img.naturalHeight < 8) {
+          setIndex((current) => current + 1);
+        }
+      }}
+      onError={() => setIndex((current) => current + 1)}
+    />
+  );
+}
+
 function siteFaviconSrc(url: string): string | null {
   try {
     const host = new URL(url.trim()).hostname.replace(/^www\./, "");
@@ -371,18 +514,32 @@ export function PlatformIcon({
 }) {
   const platform = detectPlatform(url);
   const lightBg = LIGHT_BG.has(platform.id);
+  const fetchFromHost =
+    platform.id !== "other" && !OFFICIAL_DRAWN.has(platform.id);
+  const [fetchFailed, setFetchFailed] = useState(false);
+  const [failedFor, setFailedFor] = useState(url);
+  if (failedFor !== url) {
+    setFailedFor(url);
+    setFetchFailed(false);
+  }
+  const showFetched = fetchFromHost && !fetchFailed;
   return (
     <span
       title={platform.label}
       aria-label={platform.label}
       className={`inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full ${className}`}
       style={{
-        backgroundColor: platform.color,
+        backgroundColor: showFetched ? "#fff" : platform.color,
         color: lightBg ? "#111" : "#fff",
       }}
     >
       {platform.id === "other" ? (
         <UnknownPlatformMark url={url} />
+      ) : showFetched ? (
+        <FetchedBrandIcon
+          url={url}
+          onExhausted={() => setFetchFailed(true)}
+        />
       ) : (
         <Glyph id={platform.id} />
       )}
