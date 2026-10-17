@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { useI18n } from "@/lib/i18n/locale";
+import { QR_URL_MAX_CHARS } from "@/lib/share-limits";
 
 type ShareStatus =
   | { kind: "idle" }
@@ -124,7 +125,7 @@ export function QrCard({
   subtitle?: string;
 }) {
   const { t } = useI18n();
-  const tooLong = value.length > 1200; // keep in sync with share-limits.QR_URL_MAX_CHARS
+  const tooLong = value.length > QR_URL_MAX_CHARS;
   const [status, setStatus] = useState<ShareStatus>({ kind: "idle" });
   const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
