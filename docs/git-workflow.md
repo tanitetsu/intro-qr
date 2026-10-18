@@ -26,6 +26,7 @@
 
 【本番反映（CLI・救急）】
   ユーザーが明示したときだけ ./scripts/deploy-vercel.sh
+  例外: GitHub 無料枠で Git 連携が止まっているあいだは、Agent が回復まで自分で実行する
   最新 origin/main・作業ツリーきれい・Vercel 自動ビルドと同時に走らせない
 ```
 
@@ -34,7 +35,7 @@
 1. **main に長い直しを直書きしない**（枝 + PR）
 2. **作業開始前に同期**（`./check-git-sync.sh --agent`）
 3. **デプロイは同時に 1 本だけ**（遅れ・分岐・衝突見込みが残れば中止）
-4. **`main` に merge しただけでは Agent はデプロイコマンドを実行しない**（「デプロイして」と言われたときだけ。通常は merge + push で Vercel 任せ）
+4. **`main` に merge しただけでは Agent はデプロイコマンドを実行しない**（「デプロイして」と言われたときだけ。通常は merge + push で Vercel 任せ）。**例外:** GitHub 無料デプロイ枠で push からの本番デプロイが起動しない／拒否されたあいだは、Agent が `./scripts/deploy-vercel.sh` を実行する。Git 経由が再び成功したら CLI をやめる（`.cursor/rules/github-free-deploy-fallback.mdc`）
 5. **一時トンネル**（trycloudflare / loca.lt）は本番共有禁止
 
 ## デバッグモード（Cloud Agent）
@@ -46,7 +47,7 @@
 | PR 作成 | 可 | 可 |
 | **main に merge** | ユーザーが明示したときだけ | **テスト完了後、明示がなくても merge** |
 | テスト | 変更に見合う確認を行う | **同じ（省略しない）** |
-| 本番反映 | merge 後は Vercel Git 連携任せ（CLI は依頼時のみ） | 同じ |
+| 本番反映 | merge 後は Vercel Git 連携任せ（CLI は依頼時のみ。GitHub 無料枠で止まったあいだは Agent が CLI） | 同じ |
 
 流れ:
 
@@ -77,7 +78,7 @@
 
 | どこ | 修正 | 本番反映 |
 |------|------|----------|
-| Cloud Agent | 枝 → PR → merge。開始前に `./check-git-sync.sh --agent` | 通常は **merge 後の push のみ**（Vercel 自動）。CLI は依頼時のみ `deploy-vercel.sh` |
+| Cloud Agent | 枝 → PR → merge。開始前に `./check-git-sync.sh --agent` | 通常は **merge 後の push のみ**（Vercel 自動）。CLI は依頼時のみ。GitHub 無料枠で Git デプロイが止まっているあいだは Agent が `deploy-vercel.sh` |
 | 自宅 PC | 枝 → PR、または短い修正後すぐ push | Vercel ダッシュボード / Git push。CLI は `deploy-vercel.sh` または `vercel --prod`（依頼時） |
 
 ## Vercel 初回・環境変数
@@ -92,7 +93,7 @@ git fetch origin main
 git pull origin main
 ./check-git-sync.sh --agent
 
-# 本番 CLI（ユーザー依頼・Git 連携が使えないとき）
+# 本番 CLI（ユーザー依頼、または GitHub 無料枠で Git 連携デプロイが止まったとき）
 ./scripts/deploy-vercel.sh --dry-run
 ./scripts/deploy-vercel.sh
 ```
