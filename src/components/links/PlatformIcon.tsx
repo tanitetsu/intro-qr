@@ -519,11 +519,13 @@ export function PlatformIcon({
     setFetchFailed(false);
   }
   const showFetched = fetchFromHost && !fetchFailed;
+  // スマイルは透明地。白カードだと円クリップが見えないので、Amazon だけ縁のある円盤にする。
+  const amazonDisc = platform.id === "amazon" && showFetched;
   return (
     <span
       title={platform.label}
       aria-label={platform.label}
-      className={`inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full ${className}`}
+      className={`inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full ${amazonDisc ? "border-[3px] border-black p-0.5" : ""} ${className}`}
       style={{
         backgroundColor: showFetched ? "#fff" : platform.color,
         color: lightBg ? "#111" : "#fff",
@@ -535,6 +537,7 @@ export function PlatformIcon({
         <FetchedBrandIcon
           url={url}
           preferred={preferred}
+          contain={amazonDisc}
           onExhausted={() => setFetchFailed(true)}
         />
       ) : (
