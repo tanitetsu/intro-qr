@@ -8,8 +8,7 @@ import { detectPlatform, type PlatformId } from "@/lib/platform";
  * よくある公開 URL のロゴ画像を先に使う。ファイルはリポジトリに置かない。
  */
 const PREFERRED_LOGO: Partial<Record<PlatformId, string>> = {
-  amazon:
-    "https://m.media-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png",
+  amazon: "https://upload.wikimedia.org/wikipedia/commons/4/4a/Amazon_icon.svg",
   discord: "https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/discord.svg",
   ea: "https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/ea.svg",
   google_meet: "https://www.gstatic.com/meet/icons/favicon-2026-v2.png",
@@ -536,7 +535,6 @@ export function PlatformIcon({
         <FetchedBrandIcon
           url={url}
           preferred={preferred}
-          contain={platform.id === "amazon"}
           onExhausted={() => setFetchFailed(true)}
         />
       ) : (
