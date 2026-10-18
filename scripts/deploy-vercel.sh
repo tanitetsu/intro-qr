@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Production deploy via Vercel CLI (Linux / Cloud Agent).
 # Normal path: merge to main + push → Vercel Git integration deploys once.
-# Use this only when the user explicitly asked to deploy via CLI, or Git hook is unavailable.
+# Use this when the user explicitly asked to deploy via CLI, the Git hook is
+# unavailable, or GitHub's free deploy quota blocked the Git-triggered deploy
+# (see .cursor/rules/github-free-deploy-fallback.mdc).
 #
 # Usage:
 #   ./scripts/deploy-vercel.sh

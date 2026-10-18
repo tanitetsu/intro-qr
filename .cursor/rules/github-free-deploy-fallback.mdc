@@ -1,0 +1,31 @@
+---
+description: GitHub 無料デプロイ枠で止まったら、回復まで Agent が CLI で本番デプロイする
+alwaysApply: true
+---
+
+# GitHub 無料枠で止まったときのデプロイ
+
+通常は `deploy.mdc` のとおり、`main` への push を Vercel Git 連携に任せ、CLI は「デプロイして」があるときだけ。
+
+**例外:** GitHub 無料枠が原因で、その push から本番デプロイが起動しない、または拒否されたとき。回復するまで、本番反映が必要なたびに Agent 自身が `./scripts/deploy-vercel.sh` を実行する。「デプロイして」は待たない。
+
+## 無料枠とみなす例
+
+- Actions: included minutes 尽きた、spending limit、`The job was not started because... spending limit`
+- GitHub 側で Deployment / webhook が枠・制限で作られない（ビルドエラーではない）
+
+ビルド失敗、型エラー、環境変数ミスは対象外。CLI に切り替えない。
+
+## 手順
+
+1. ログか Vercel / Actions の状態で、止まっている理由が無料枠だと確認する。
+2. 同じコミットに対して Git 連携のビルドが走っているなら、終わるまで CLI を足さない（同時デプロイ禁止）。枠で拒否されてビルドが無いときだけ CLI。
+3. 最新 `origin/main`・作業ツリーきれいで `./scripts/deploy-vercel.sh`（先に `--dry-run`）。
+4. 以降、GitHub 経由の本番デプロイが再び成功するまで、本番反映はこの CLI を Agent が行う。
+5. 成功を確認したら CLI をやめ、通常（push のみ）に戻す。枠の回復を待つポーリングや再試行ループはしない。
+
+```text
+❌ 枠超過で Git デプロイが拒否されているのに、ユーザーの「デプロイして」を待つ
+❌ 枠が戻るまで Actions の再実行だけを繰り返す
+✅ 枠が原因だと確認 → deploy-vercel.sh でそのコミットを本番へ出す → 次回の Git デプロイが通ったら CLI をやめる
+```
